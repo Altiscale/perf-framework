@@ -4,6 +4,6 @@
  "host_name":"<host name of the emr master>",
  "user_name":"hadoop",
  "ssh_private_key":"<ssh_key>",
- "nodeType":"m1.large",
+ "node_type":"m1.large",
  "hadoop_slaves":10
 }

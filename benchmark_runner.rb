@@ -100,7 +100,7 @@ settings = parseOptions(logger)
 logger.level = log_map[settings.log_level]
 
 # benchmark = MRBenchmark.new(settings.benchmark_name, settings.platform_name, logger.level)
-benchmark_factory = FactoryLoader.new().load_factory(settings.benchmark_path, settings.platform_path, settings.output, logger.level)
+benchmark_factory = FactoryLoader.new().load_factory(settings.benchmark_path, settings.platform_path, settings.output, settings.log_level)
 benchmark = benchmark_factory.create_benchmark
 status = benchmark.run settings.label
 logger.debug "status #{status.to_s}"
