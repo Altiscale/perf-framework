@@ -62,7 +62,7 @@ class MRBenchmark
     # Additional output code
      
     @writer.write result unless @writer.nil?
-    result
+    result[:exit_code]
   end
 
   def populate_output output, label

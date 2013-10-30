@@ -109,6 +109,6 @@ benchmark_factory = FactoryLoader.new().load_factory(
   settings.log_level)
 benchmark = benchmark_factory.create_benchmark
 status = benchmark.run settings.label
-logger.debug "status #{status.to_s}"
-exit status[:exit_code]
+logger.debug "status #{status}"
+exit status
 

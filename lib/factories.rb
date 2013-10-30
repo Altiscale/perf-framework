@@ -51,7 +51,7 @@ class EMR_Factory < Factory
     benchmark = MRBenchmark.new(@benchmark_config, @platform_config, scp_uploader, ssh_command)
     benchmark.writer = @writer
     benchmark.validator = validator
-    benchmark  
+    benchmark
   end
 end
 
@@ -63,7 +63,7 @@ class ALTI_Factory < Factory
     benchmark = MRBenchmark.new(@benchmark_config, @platform_config, scp_uploader, ssh_command)
     benchmark.writer = @writer
     benchmark.validator = validator
-    benchmark  
+    benchmark
   end
 end
 
@@ -74,7 +74,7 @@ class FactoryLoader
     platform_config = JSON.parse(File.read(platform_path))
     benchmark_name = benchmark_config["benchmark"]
     platform_name = platform_config["platform"]
-    # logger.debug "initialized #{benchmark_name} #{platform_name}"
+    logger.debug "initialized #{benchmark_name} #{platform_name}"
     factory_class = platform_name.upcase + '_Factory'
     factory_class = self.class.const_get(factory_class)
     factory_class.new benchmark_config, platform_config, output_file, log_level

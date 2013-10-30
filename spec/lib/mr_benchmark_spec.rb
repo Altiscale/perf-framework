@@ -144,7 +144,7 @@ describe MRBenchmark do
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
         benchmark.validator = mock_validator
-        expect(benchmark.run label).to include(job_status)
+        expect(benchmark.run label).to eq(0)
       end
     end
   end
