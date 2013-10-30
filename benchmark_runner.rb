@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 # 
-    # http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 # 
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ require 'perf_benchmark'
 require 'logger'
 require 'optparse'
 require 'ostruct'
+
 LOG_LEVELS = [
   'debug',
   'info',
@@ -28,6 +29,7 @@ LOG_LEVELS = [
   'fatal'
 ]
 ONE_HUNDRED_MB = 100 * 1024 * 1024
+
 def parseOptions(logger)
   settings = OpenStruct.new
   options = OptionParser.new do |opts|
@@ -37,30 +39,30 @@ def parseOptions(logger)
     settings.run_job = false
     settings.output = "results.csv"
     opts.on('-b', '--benchmark_path BENCHMARK_JSON_PATH',
-            'name of the benchmark to run') do |benchmark_path|
+    'name of the benchmark to run') do |benchmark_path|
       settings.benchmark_path = benchmark_path
     end
-    
+
     opts.on('-p', '--platform_name PLATFORM_JSON_PATH',
-            'name of the platform to run the benchmark on') do |platform_path|
+    'name of the platform to run the benchmark on') do |platform_path|
       settings.platform_path = platform_path
     end
 
     opts.on('-l', '--log-level LEVEL',
-            "Log level: #{LOG_LEVELS.join(', ')}") do |log_level|
+    "Log level: #{LOG_LEVELS.join(', ')}") do |log_level|
       settings.log_level = log_level
     end
-    
+
     opts.on('-o', '--output FILE',
-            "output file to write the result") do |output|
+    "output file to write the result") do |output|
       settings.output = output
     end
-    
-     opts.on('-j', '--job_label LABEL_NAME',
-            "A label for the job") do |label|
+
+    opts.on('-j', '--job_label LABEL_NAME',
+    "A label for the job") do |label|
       settings.label = label
     end
-  
+
     opts.on('-h', '--help', 'Show this help.') do
       logger.info options.to_s
       exit
@@ -100,7 +102,11 @@ settings = parseOptions(logger)
 logger.level = log_map[settings.log_level]
 
 # benchmark = MRBenchmark.new(settings.benchmark_name, settings.platform_name, logger.level)
-benchmark_factory = FactoryLoader.new().load_factory(settings.benchmark_path, settings.platform_path, settings.output, settings.log_level)
+benchmark_factory = FactoryLoader.new().load_factory(
+  settings.benchmark_path,
+  settings.platform_path,
+  settings.output,
+  settings.log_level)
 benchmark = benchmark_factory.create_benchmark
 status = benchmark.run settings.label
 logger.debug "status #{status.to_s}"
