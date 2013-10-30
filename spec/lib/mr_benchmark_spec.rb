@@ -50,7 +50,7 @@ describe MRBenchmark do
         result[:input] = benchmark_config["platformspec"][platform]["input"]
         result[:output] = output
         result[:hadoop_jar] = benchmark_config["platformspec"][platform]["hadoop_jar"].split("/")[-1]
-        result[:numNodes] = platform_config["hadoop_slaves"]
+        result[:num_nodes] = platform_config["hadoop_slaves"]
         result[:job_flow_id] = platform_config["job_flow_id"]
         result[:job_num] = mock_validator.job_num
         benchmark = MRBenchmark.new benchmark_config, platform_config, double(SCPUploader), double(SSHRun)
