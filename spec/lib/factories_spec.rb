@@ -13,13 +13,13 @@
 # limitations under the License
 
 require 'spec_helper'
-
 describe FactoryLoader, "#load_factory" do
   it "parses benchmark and platform json files" do
     benchmark_path = "resources/wikilogs-config.json"
     platform_path = "resources/emr-config.json"
     output_file = "results.csv"
-    log_level = "some log level"
+    log_level = 'debug'
+    puts "lg: #{log_level}"
     result_factory = EMR_Factory.new JSON.parse(File.read(benchmark_path)), JSON.parse(File.read(platform_path)), output_file, log_level
     factory_from_loader = FactoryLoader.new().load_factory benchmark_path, platform_path, output_file, log_level
     expect(factory_from_loader).to be_kind_of(EMR_Factory)
@@ -53,7 +53,7 @@ describe "Factory classes" do
     output = "#{benchmark_config["platformspec"][platform]["output"]}/#{machine}"
     label = "myNewJob"
     output_file = "results.csv"
-    log_level = "some log level"
+    log_level = 'debug'
     describe EMR_Factory, "#create_benchmark" do
       it "creates a benchmark with the provided configuration" do
         emr_factory = EMR_Factory.new benchmark_config, platform_config, output_file, log_level
