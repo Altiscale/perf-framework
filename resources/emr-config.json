@@ -1,0 +1,9 @@
+{
+ "platform":"emr",
+ "jobflowId":"j-YKJZHMIJ9HGL",
+ "hostName":"ec2-54-214-101-162.us-west-2.compute.amazonaws.com",
+ "userName":"hadoop",
+ "sshPrivateKey":"<ssh_key>",
+ "nodeType":"m1.large",
+ "hadoopSlaves":10
+}

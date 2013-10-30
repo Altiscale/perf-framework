@@ -1,0 +1,5 @@
+{"platformName":"alti",
+ "hostName":"perf-desktop.test.altiscale.com",
+ "userName":"<user_name>",
+ "sshPrivateKey":"<ssh_key>"
+}
