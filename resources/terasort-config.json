@@ -1,6 +1,6 @@
 {
 	"benchmark": "terasort",
-	"runOptions": "-Dmapred.reduce.tasks=1 -Dmapreduce.terasort.output.replication=3",
+	"run_options": "-Dmapred.reduce.tasks=1 -Dmapreduce.terasort.output.replication=3",
 	"platformspec": {
 		"testplatform": {
 			"jarfilename": "/path/to/test/hadoop-examples-3.1.4.jar"
@@ -11,26 +11,26 @@
 		"vcwb2": {
 			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.2-5-alpha.jar",
 			"rmrCommand": "-rm -r",
-			"maxValidateBytes": 40
+			"max_validate_bytes": 40
 		},
 		"alti": {
 			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.5.jar",
 			"rmrCommand": "-rm -r",
-			"maxValidateBytes": 40
+			"max_validate_bytes": 40
 		},
 		"emr": {
-			"mainClass": "terasort",
-			"hadoopJar": "/home/hadoop/hadoop-examples-1.0.3.jar",
+			"main_class": "terasort",
+			"hadoop_jar": "/home/hadoop/hadoop-examples-1.0.3.jar",
 			"rmrCommand": "-rmr",
-			"maxValidateBytes": 40,
-			"cleanupCommand": "-rmr",
+			"max_validate_bytes": 40,
+			"cleanup_command": "-rmr",
 			"input": "/ec2-54-212-99-232",
 			"output": "/terasort"
 		},
 		"f4": {
 			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar",
 			"rmrCommand": "-rm -r",
-			"maxValidateBytes": 40
+			"max_validate_bytes": 40
 		}
 	}
 }

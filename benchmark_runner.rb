@@ -5,7 +5,7 @@ require 'perf_benchmark'
 require 'logger'
 require 'optparse'
 require 'ostruct'
-log_levels = [
+LOG_LEVELS = [
   'debug',
   'info',
   'warn',
@@ -13,7 +13,7 @@ log_levels = [
   'fatal'
 ]
 ONE_HUNDRED_MB = 100 * 1024 * 1024
-def parseOptions(log_levels, logger)
+def parseOptions(logger)
   settings = OpenStruct.new
   options = OptionParser.new do |opts|
     settings.log_level = 'info'
@@ -32,7 +32,7 @@ def parseOptions(log_levels, logger)
     end
 
     opts.on('-l', '--log-level LEVEL',
-            "Log level: #{log_levels.join(', ')}") do |log_level|
+            "Log level: #{LOG_LEVELS.join(', ')}") do |log_level|
       settings.log_level = log_level
     end
     
@@ -67,8 +67,8 @@ def parseOptions(log_levels, logger)
       logger.warn options
       exit!
     end
-    if !log_levels.include?(settings.log_level)
-      logger.warn "Invalid log_level (#{settings.log_level}).  Valid values: #{log_levels.join(', ')}"
+    if !LOG_LEVELS.include?(settings.log_level)
+      logger.warn "Invalid log_level (#{settings.log_level}).  Valid values: #{LOG_LEVELS.join(', ')}"
       exit!
     end
   rescue OptionParser::InvalidOption, OptionParser::MissingArgument
@@ -80,11 +80,11 @@ def parseOptions(log_levels, logger)
 end
 
 logger = Logger.new(STDOUT, shift_size = ONE_HUNDRED_MB)
-log_map = Hash[log_levels.map.with_index.to_a]
-settings = parseOptions(log_levels, logger)
+log_map = Hash[LOG_LEVELS.map.with_index.to_a]
+settings = parseOptions(logger)
 logger.level = log_map[settings.log_level]
 
-# benchmark = MR_Benchmark.new(settings.benchmark_name, settings.platform_name, logger.level)
+# benchmark = MRBenchmark.new(settings.benchmark_name, settings.platform_name, logger.level)
 benchmark_factory = FactoryLoader.new().load_factory(settings.benchmark_path, settings.platform_path, settings.output, logger.level)
 benchmark = benchmark_factory.create_benchmark
 status = benchmark.run settings.label

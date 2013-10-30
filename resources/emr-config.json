@@ -1,9 +1,9 @@
 {
  "platform":"emr",
- "jobflowId":"j-YKJZHMIJ9HGL",
- "hostName":"ec2-54-214-101-162.us-west-2.compute.amazonaws.com",
- "userName":"hadoop",
- "sshPrivateKey":"<ssh_key>",
+ "jobflow_id":"<the emr job flow>",
+ "host_name":"<host name of the emr master>",
+ "user_name":"hadoop",
+ "ssh_private_key":"<ssh_key>",
  "nodeType":"m1.large",
- "hadoopSlaves":10
+ "hadoop_slaves":10
 }
