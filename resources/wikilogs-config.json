@@ -1,0 +1,40 @@
+{
+	"benchmark": "wikilogs",
+	"run_options":"-Dmapreduce.wikilogs.output.replication=3",
+	"platformspec": {
+		"testplatform": {
+			"jarfilename": "/path/to/test/hadoop-examples-3.1.4.jar"
+		},
+		"vcwb": {
+			"jarfilename": "/usr/share/hadoop/hadoop-examples-1.0.0.jar"
+		},
+		"vcwb2": {
+			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.2-5-alpha.jar",
+
+			"max_validate_bytes": 40
+		},
+		"alti": {
+			"input": "/wikilogs-5gb",
+			"output": "/out",
+			"hadoop_jar": "/home/deniss/WikiStats.jar",
+			"local_jar": "/Users/ashahab/dev/perf/WikiStats.jar",
+			"main_class": "org.apache.hadoop.examples.WikiStats",
+			"max_validate_bytes": 40,
+			"cleanup_command": "-rm -r"
+		},
+		"emr": {
+			"input": "s3://wikilogs-1gb",
+			"output": "s3://dp-138-perf/out",
+			"local_jar": "/Users/ashahab/dev/perf/WikiStats_emr.jar",
+			"main_class": "org.apache.hadoop.examples.WikiStats",
+			"hadoop_jar": "/home/hadoop/WikiStats.jar",
+			"max_validate_bytes": 40,
+			"cleanup_command": "-rmr"
+		},
+		"f4": {
+			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar",
+
+			"max_validate_bytes": 40
+		}
+	}
+}
