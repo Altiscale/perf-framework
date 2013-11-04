@@ -162,7 +162,8 @@ def allocate_emr_instance(settings, logger)
    allocate_emr = "emr --create --name #{settings.job_flow_name} --alive --instance-group MASTER --instance-type #{settings.instance_size} "\
    "--instance-count 1 --instance-group CORE --instance-type #{settings.instance_size} --instance-count #{settings.num_instances} "\
    "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia "\
-   "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop --args \"-m,mapred.reduce.tasks.speculative.execution=false\"" unless !settings.on_demand
+   "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop --bootstrap-name \"Disable reducer speculative execution\" " \
+   "--args \"-m,mapred.reduce.tasks.speculative.execution=false\"" unless !settings.on_demand
   allocate_emr = "#{allocate_emr} --log-uri #{settings.log_uri}"
   allocate_emr = "#{allocate_emr} --ami-version 3.0.0"
   allocate_emr = "#{allocate_emr} > /tmp/emr_jobflow_id"
