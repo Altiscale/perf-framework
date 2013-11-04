@@ -45,7 +45,6 @@ class MRBenchmark
     output = "#{output}/#{Time.now.to_i}" if @uniquify
     #initalize the *Commands class
     #scp the hadoop jar
-    logger.debug "uploading #{local_jar} to #{hadoop_jar}"
     @scp_uploader.upload local_jar, hadoop_jar unless local_jar.nil?
     logger.debug "Done copying jar"
     #hdfs cleanup
@@ -57,12 +56,9 @@ class MRBenchmark
     end
     #run hadoop command
     hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
-   
     job_status = @ssh_command.execute hadoop_command
     result = populate_output output, label 
-    result.merge! job_status
-    # Additional output code
-     
+    result.merge! job_status  
     @writer.write result unless @writer.nil?
     result[:exit_code]
   end

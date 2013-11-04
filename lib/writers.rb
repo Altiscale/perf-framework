@@ -13,7 +13,9 @@
 # limitations under the License
 
 require 'csv'
+require 'logging'
 class CSVWriter
+  include Logging
   def initialize(file)
     @file = file
   end
@@ -26,6 +28,7 @@ class CSVWriter
     CSV.open(@file, "ab") do |csv|
       csv << output.keys unless file_exists
       csv << output.values
+      logger.info "wrote: #{output.values.to_s} to #{file_exists}"
     end
   end
 end

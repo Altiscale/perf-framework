@@ -93,7 +93,7 @@ class BenchmarkMaker
     self
   end
   
-  def load_factory(benchmark_path, platform_path, output_file, log_level)
+  def load_factory benchmark_path, platform_path, output_file, log_level
     logger.level = log_level
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))

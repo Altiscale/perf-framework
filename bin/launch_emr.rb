@@ -209,12 +209,12 @@ def logAndExit(logger, message)
   raise "Fatal error: #{message}"
 end 
 
-def create_emr_conf(settings, logger, machine_dns)
+def create_emr_conf(settings, logger, machine_dns, jobflow_id)
   @machine_dns = machine_dns
   @private_key = settings.ssh_key
   @instance_size = settings.instance_size
   @instance_count = settings.num_instances
-  
+  @jobflow_id = jobflow_id
   emr_json = ERB.new(File.read("#{settings.emr_erb}")).result(binding)
   emr_config = Tempfile.new('emr_config')
   File.open("#{emr_config.path}","w") do |f|
@@ -245,7 +245,7 @@ begin
   tag_cluster(settings, logger, jobflow_id)
   #run a job
   # for now call benchmark
-  emr_conf_path = create_emr_conf(settings, logger, machine_dns)
+  emr_conf_path = create_emr_conf(settings, logger, machine_dns, jobflow_id)
   run_job_cmd = "ruby -I lib #{settings.perf_framework_dir}/bin/benchmark_runner.rb "\
   "-b #{settings.benchmark_path} -p #{emr_conf_path} -l #{settings.log_level} "\
   "-o #{settings.output_file} -j #{settings.job_label}"
