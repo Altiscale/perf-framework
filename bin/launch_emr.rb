@@ -138,16 +138,16 @@ def parseOptions(logger)
     if !missing.empty?
       logger.warn "Missing required options: #{missing.join(', ')}"
       logger.warn options.to_s
-      exit!
+      exit 1
     end
     if !LOG_LEVELS.include?(settings.log_level)
       logger.warn "Invalid log_level (#{settings.log_level}).  Valid values: #{LOG_LEVELS.join(', ')}"
-      exit!
+      exit 1
     end
   rescue OptionParser::InvalidOption, OptionParser::MissingArgument
     logger.error $!.to_s
     logger.error options.to_s
-    exit!
+    exit 1
   end
   settings
 end
@@ -168,7 +168,7 @@ def allocate_emr_instance(settings, logger)
   allocate_emr = "#{allocate_emr} --ami-version 3.0.0"
   allocate_emr = "#{allocate_emr} > /tmp/emr_jobflow_id"
   logger.info "allocating emr: #{allocate_emr}"
-  logAndExit(logger, "Allocate emr failed: #{allocate_emr}") unless system("#{allocate_emr}")
+  log_and_exit(logger, "Allocate emr failed: #{allocate_emr}") unless system("#{allocate_emr}")
   jobflow_id = `cat /tmp/emr_jobflow_id | awk '{print $4}'`
   jobflow_id = jobflow_id.gsub("\n",'')
   begin
@@ -178,7 +178,7 @@ def allocate_emr_instance(settings, logger)
     logger.debug "emr #{jobflow_id} status #{status}"
     sleep EMR_STATUS_CHECK_INTERVAL
   end while !((status.include? "WAITING") || (status.include? "FAILED"))
-  logAndExit(logger, "Failed to allocate emr: #{jobflow_id}") unless status.include? "WAITING"
+  log_and_exit(logger, "Failed to allocate emr: #{jobflow_id}") unless status.include? "WAITING"
   logger.info "Successfully allocated emr #{status}"
   machine_dns = status_j["JobFlows"][0]["Instances"]["MasterPublicDnsName"]
   ret = [jobflow_id, machine_dns]
@@ -187,7 +187,7 @@ end
 
 def set_cluster_visible(settings, logger, jobflow_id)
   set_visible_command = "emr --set-visible-to-all-users true -j #{jobflow_id}"
-  logAndExit(logger, "Failed to set visible: #{jobflow_id}") unless system("#{set_visible_command}")
+  log_and_exit(logger, "Failed to set visible: #{jobflow_id}") unless system("#{set_visible_command}")
 end
 
 def tag_cluster(settings, logger, jobflow_id)
@@ -201,11 +201,11 @@ def tag_cluster(settings, logger, jobflow_id)
   instance_array.each do |instance|
     tagging_cmd = "ec2-create-tags #{instance} --tag \"User=#{user}@altiscale.com\" --tag \"Customer=Engineering\" --region us-west-2"
     logger.debug "tagging #{tagging_cmd}"
-    logAndExit(logger, "Failed to tag: #{instance}") unless system(tagging_cmd)
+    log_and_exit(logger, "Failed to tag: #{instance}") unless system(tagging_cmd)
   end   
 end
 
-def logAndExit(logger, message)
+def log_and_exit(logger, message)
   logger.fatal(message)
   raise "Fatal error: #{message}"
 end 
@@ -228,7 +228,7 @@ def terminate_emr(settings, logger, jobflow_id)
   
   terminate_cmd = "emr --terminate -j #{jobflow_id}"
   logger.info "about to terminate emr: #{jobflow_id}"
-  logAndExit(logger, "Failed to terminate #{terminate_cmd}") unless system(terminate_cmd)
+  log_and_exit(logger, "Failed to terminate #{terminate_cmd}") unless system(terminate_cmd)
   logger.debug "successfully terminated #{terminate_cmd}"
 end
 
