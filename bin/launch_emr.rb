@@ -28,6 +28,8 @@ options = OptionParser.new do |opts|
   settings.on_demand = false
   settings.preserve = false
   settings.uniquifier = false
+  settings.turn_off_ganglia = false
+  settings.toggle_speculative_execution = false
   settings.output_file = 'results.csv'
   settings.log_uri = 's3://dp-138-perf'
 
@@ -133,6 +135,16 @@ options = OptionParser.new do |opts|
           'Number of times to run') do |times|
     settings.times = times
   end
+  
+  opts.on('--turn-off-ganglia',
+          'Flag to turn off ganglia') do
+    settings.turn_off_ganglia = true
+  end
+  
+  opts.on('--toggle-speculative-execution',
+          'Flag to turn speculative-execution on') do
+    settings.toggle_speculative_execution = true
+  end
 
   opts.on('-h',
           '--help',
@@ -176,13 +188,13 @@ def allocate_emr_instance(settings, logger)
   "--instance-type #{settings.instance_size} --instance-count #{settings.num_instances} "
   
   allocate_emr = "#{allocate_emr} --bid-price #{settings.bid_price}" unless settings.on_demand
-  allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia "
+  allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia " unless settings.turn_off_ganglia
   allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
   "--bootstrap-name \"Disable reducer speculative execution\" " \
   "--args \"-m,mapreduce.reduce.speculative=false\" " \
   "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
   "--bootstrap-name \"Disable mapper speculative execution\" " \
-  "--args \"-m,mapreduce.map.speculative=false\" "
+  "--args \"-m,mapreduce.map.speculative=false\" " unless settings.toggle_speculative_execution
   allocate_emr = "#{allocate_emr} --log-uri #{settings.log_uri} "
   allocate_emr = "#{allocate_emr} --ami-version 3.0.0 "
   allocate_emr = "#{allocate_emr} > /tmp/emr_jobflow_id"
