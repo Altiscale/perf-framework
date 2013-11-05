@@ -14,22 +14,22 @@
 			"max_validate_bytes": 40
 		},
 		"alti": {
-			"input": "/wikilogs-5gb",
-			"output": "/out",
-			"hadoop_jar": "/home/deniss/WikiStats.jar",
-			"local_jar": "/Users/ashahab/dev/perf/WikiStats.jar",
-			"main_class": "org.apache.hadoop.examples.WikiStats",
+			"input": "<input>",
+			"output": "<output>",
+			"hadoop_jar": "<hadoop_jar>",
+			"local_jar": "local_jar",
+			"main_class": "main_class",
 			"max_validate_bytes": 40,
-			"cleanup_command": "-rm -r"
+			"cleanup_command": "cleanup_command"
 		},
 		"emr": {
-			"input": "s3://wikilogs-1gb",
-			"output": "s3://dp-138-perf/out",
-			"local_jar": "/Users/ashahab/dev/perf/WikiStats_emr.jar",
-			"main_class": "org.apache.hadoop.examples.WikiStats",
-			"hadoop_jar": "/home/hadoop/WikiStats.jar",
+			"input": "<input>",
+			"output": "<output>",
+			"hadoop_jar": "<hadoop_jar>",
+			"local_jar": "local_jar",
+			"main_class": "main_class",
 			"max_validate_bytes": 40,
-			"cleanup_command": "-rmr"
+			"cleanup_command": "cleanup_command"
 		},
 		"f4": {
 			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar",

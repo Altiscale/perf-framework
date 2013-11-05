@@ -18,6 +18,7 @@ require 'net/scp'
 require 'logging'
 
 class SCPUploader
+  include Logging
   def initialize host, user, ssh_key
     @host = host
     @user = user
@@ -32,6 +33,7 @@ class SCPUploader
       :paranoid => FALSE,
       :user_known_hosts_file => "/dev/null",
       :global_known_hosts_file => "/dev/null" ) do |session|
+      logger.info "Uploading #{local_file} to #{remote_file}"  
       session.upload! local_file, remote_file
     end
   end
@@ -55,7 +57,7 @@ class SSHRun
       :paranoid => FALSE,
       :user_known_hosts_file => "/dev/null",
       :global_known_hosts_file => "/dev/null" ) do |session|
-      logger.debug "Logged into #{@host} to run #{command}"
+      logger.info "Logged into #{@host} to run #{command}"
       start_time = Time.now.to_i
       status = execsh command, session, command
       end_time = Time.now.to_i

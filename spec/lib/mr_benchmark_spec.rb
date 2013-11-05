@@ -30,13 +30,10 @@ describe MRBenchmark do
     platform_config = {}
     platform_config["platform"] = platform
     platform_config["hadoop_slaves"] = 13
-    platform_config["job_flow_id"] = "j-2342"
+    platform_config["jobflow_id"] = "j-2342"
     platform_config["host_name"] = "my.fake.host"
-    machine = platform_config["host_name"].split(".")[0]
-    
-    output = "#{benchmark_config["platformspec"][platform]["output"]}/#{machine}"
     label = "myNewJob"
-    
+    output = benchmark_config["platformspec"][platform]["output"]
     describe MRBenchmark, "#populate_output" do
       it "returns a populated hash" do
         mock_validator = double(MRValidator)
@@ -48,10 +45,10 @@ describe MRBenchmark do
         result[:platform] = platform_config["platform"]
         result[:run_options] =  benchmark_config["run_options"]
         result[:input] = benchmark_config["platformspec"][platform]["input"]
-        result[:output] = output
+        result[:output] = benchmark_config["platformspec"][platform]["output"]
         result[:hadoop_jar] = benchmark_config["platformspec"][platform]["hadoop_jar"].split("/")[-1]
         result[:num_nodes] = platform_config["hadoop_slaves"]
-        result[:job_flow_id] = platform_config["job_flow_id"]
+        result[:jobflow_id] = platform_config["jobflow_id"]
         result[:job_num] = mock_validator.job_num
         benchmark = MRBenchmark.new benchmark_config, platform_config, double(SCPUploader), double(SSHRun)
         benchmark.validator = mock_validator
@@ -144,7 +141,7 @@ describe MRBenchmark do
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
         benchmark.validator = mock_validator
-        expect(benchmark.run label).to include(job_status)
+        expect(benchmark.run label).to eq(0)
       end
     end
   end

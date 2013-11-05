@@ -11,24 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License
+# Rakefile - for perf-framework
 
-require 'csv'
-require 'logging'
-class CSVWriter
-  include Logging
-  def initialize(file)
-    @file = file
-  end
-  
-  #Parse the file
-  #If it's empty or does not exist, print a header column
-  #Then print the map out
-  def write output
-    file_exists = File.exists? @file
-    CSV.open(@file, "ab") do |csv|
-      csv << output.keys unless file_exists
-      csv << output.values
-      logger.info "wrote: #{output.values.to_s} to #{file_exists}"
-    end
-  end
-end
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new('spec')
+
+task :default => :spec

@@ -27,14 +27,13 @@ module Logging
 end
 
 class CustomLogger < Logger
-  LOG_LEVELS = [
-    'debug',
-    'info',
-    'warn',
-    'error',
-    'fatal'
-  ]
-
+  LOG_LEVELS = %w(
+    debug
+    info
+    warn
+    error
+    fatal
+  )
   def level= log_level
     puts "Setting log level to #{log_level}"
     if !LOG_LEVELS.include?(log_level)
