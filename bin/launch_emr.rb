@@ -185,9 +185,15 @@ def allocate_emr_instance(settings, logger)
   allocate_emr = "emr --create --name #{settings.job_flow_name} "\
   "--alive --instance-group MASTER --instance-type #{settings.instance_size} "\
   "--instance-count 1 --instance-group CORE "\
-  "--instance-type #{settings.instance_size} --instance-count #{settings.num_instances} "
+  "--instance-type #{settings.instance_size} "\
+  "--instance-count #{settings.num_instances} " if settings.on_demand
   
-  allocate_emr = "#{allocate_emr} --bid-price #{settings.bid_price}" unless settings.on_demand
+  allocate_emr = "emr --create --name #{settings.job_flow_name} "\
+  "--alive --instance-group MASTER --instance-type #{settings.instance_size} "\
+  "--instance-count 1 --bid-price #{settings.bid_price} --instance-group CORE "\
+  "--instance-type #{settings.instance_size} "\
+  "--instance-count #{settings.num_instances} --bid-price #{settings.bid_price}" unless settings.on_demand
+  
   allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia " unless settings.turn_off_ganglia
   allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
   "--bootstrap-name \"Disable reducer speculative execution\" " \
