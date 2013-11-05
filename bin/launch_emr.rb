@@ -172,23 +172,19 @@ def allocate_emr_instance(settings, logger)
 
   allocate_emr = "emr --create --name #{settings.job_flow_name} "\
   "--alive --instance-group MASTER --instance-type #{settings.instance_size} "\
-  "--instance-count 1 --bid-price #{settings.bid_price} --instance-group CORE "\
-  "--instance-type #{settings.instance_size} --instance-count #{settings.num_instances} "\
-  "--bid-price #{settings.bid_price} --bootstrap-action "\
-  "s3://elasticmapreduce/bootstrap-actions/install-ganglia "\
-  "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop"\
-  " --args \"-m,mapred.reduce.tasks.speculative.execution=false\""
-
-  allocate_emr = "emr --create --name #{settings.job_flow_name} "\
-  "--alive --instance-group MASTER --instance-type #{settings.instance_size} "\
-  "--instance-count 1 --instance-group CORE --instance-type #{settings.instance_size} "\
-  "--instance-count #{settings.num_instances} "\
-  "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia "\
-  "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
+  "--instance-count 1 --instance-group CORE "\
+  "--instance-type #{settings.instance_size} --instance-count #{settings.num_instances} "
+  
+  allocate_emr = "#{allocate_emr} --bid-price #{settings.bid_price}" unless settings.on_demand
+  allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/install-ganglia "
+  allocate_emr = "#{allocate_emr} --bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
   "--bootstrap-name \"Disable reducer speculative execution\" " \
-  "--args \"-m,mapred.reduce.tasks.speculative.execution=false\"" if settings.on_demand
-  allocate_emr = "#{allocate_emr} --log-uri #{settings.log_uri}"
-  allocate_emr = "#{allocate_emr} --ami-version 3.0.0"
+  "--args \"-m,mapreduce.reduce.speculative=false\" " \
+  "--bootstrap-action s3://elasticmapreduce/bootstrap-actions/configure-hadoop "\
+  "--bootstrap-name \"Disable mapper speculative execution\" " \
+  "--args \"-m,mapreduce.map.speculative=false\" "
+  allocate_emr = "#{allocate_emr} --log-uri #{settings.log_uri} "
+  allocate_emr = "#{allocate_emr} --ami-version 3.0.0 "
   allocate_emr = "#{allocate_emr} > /tmp/emr_jobflow_id"
   logger.info "allocating emr: #{allocate_emr}"
   log_and_exit(logger, "Allocate emr failed: #{allocate_emr}") unless system("#{allocate_emr}")
