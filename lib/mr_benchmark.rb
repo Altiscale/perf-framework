@@ -34,7 +34,7 @@ class MRBenchmark
   # build up the set of commands accoring to the parameters provided
 
   #
-  def run label=nil
+  def run(result={})
     cleanup_command =  @benchmark_config["platformspec"][@platform]["cleanup_command"]
     local_jar = @benchmark_config["platformspec"][@platform]["local_jar"]
     hadoop_jar = @benchmark_config["platformspec"][@platform]["hadoop_jar"]
@@ -57,24 +57,31 @@ class MRBenchmark
     #run hadoop command
     hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
     job_status = @ssh_command.execute hadoop_command
-    result = populate_output output, label 
+    result = populate_output output, result
     result.merge! job_status  
     @writer.write result unless @writer.nil?
-    result[:exit_code]
+    result
   end
 
-  def populate_output output, label
-    result = {}
-    result[:label] = label
+  def default_label
+    "#{@benchmark_config["benchmark"]}"\
+    "_#{@platform_config["platform"]}_#{@platform_config["node_type"]}"\
+    "_#{@platform_config["hadoop_slaves"]}"
+  end
+  
+  def populate_output output, result
+    result[:label] = default_label if result[:label].nil?
     result[:benchmark] = @benchmark_config["benchmark"]
     result[:platform] = @platform_config["platform"]
     result[:run_options] =  @benchmark_config["run_options"]
     result[:input] = @benchmark_config["platformspec"][@platform]["input"] 
     result[:output] = output
     result[:hadoop_jar] = @benchmark_config["platformspec"][@platform]["hadoop_jar"].split("/")[-1]
+    result[:node_type] = @platform_config["node_type"]
     result[:num_nodes] = @platform_config["hadoop_slaves"]
     result[:jobflow_id] = @platform_config["jobflow_id"]
     result[:job_num] = @validator.job_num  
+    result[:application_num] = @validator.application_num
     result
   end
 end

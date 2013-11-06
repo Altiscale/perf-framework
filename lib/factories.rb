@@ -65,13 +65,12 @@ class CommandChain
     self
   end
 
-  def run label=nil
-    status = 0  
+  def run result
     @commands.each do |cmd| 
-      logger.info "executing #{cmd.description}" if status == 0
-      status = cmd.run label if status == 0
+      logger.info "executing #{cmd.description}" 
+      result = cmd.run result
     end
-    status
+    result
   end  
   
   def commands
@@ -109,7 +108,7 @@ class BenchmarkMaker
     host = platform_config['host_name']
     user = platform_config['user_name']
     ssh_key = platform_config['ssh_private_key']                          
-    ssh_factory = SSHFactory.new(host, user, ssh_key)
+    ssh_factory = SSHFactory.new(host, user, ssh_key, JSONParser.new)
     #May factor out to a factory later?
     chain.add( RemoteDistCP.new( ssh_factory.ssh, 
                                       @hdfs_from, 

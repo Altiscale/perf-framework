@@ -32,13 +32,14 @@ describe MRBenchmark do
     platform_config["hadoop_slaves"] = 13
     platform_config["jobflow_id"] = "j-2342"
     platform_config["host_name"] = "my.fake.host"
+    platform_config["node_type"] = "m2_very_large"
     label = "myNewJob"
     output = benchmark_config["platformspec"][platform]["output"]
     describe MRBenchmark, "#populate_output" do
       it "returns a populated hash" do
         mock_validator = double(MRValidator)
-        mock_validator.stub(:job_num).and_return(["job_122"])
-       
+        mock_validator.stub(:job_num).and_return("job_122")
+        mock_validator.stub(:application_num).and_return('application_num')
         result = {}
         result[:label] = label
         result[:benchmark] = benchmark_config["benchmark"]
@@ -48,11 +49,13 @@ describe MRBenchmark do
         result[:output] = benchmark_config["platformspec"][platform]["output"]
         result[:hadoop_jar] = benchmark_config["platformspec"][platform]["hadoop_jar"].split("/")[-1]
         result[:num_nodes] = platform_config["hadoop_slaves"]
+        result[:node_type] = platform_config["node_type"]
         result[:jobflow_id] = platform_config["jobflow_id"]
         result[:job_num] = mock_validator.job_num
+        result[:application_num] = mock_validator.application_num
         benchmark = MRBenchmark.new benchmark_config, platform_config, double(SCPUploader), double(SSHRun)
         benchmark.validator = mock_validator
-        expect(benchmark.populate_output(output, label)).to eq(result)
+        expect(benchmark.populate_output(output, {:label => label})).to eq(result)
       end
     end
     
@@ -60,7 +63,8 @@ describe MRBenchmark do
       it "copies hadoop jar if available" do
         benchmark_config["platformspec"][platform]["local_jar"] = "someJar"
         mock_validator = double(MRValidator)
-        mock_validator.stub(:job_num).and_return(["job_122"])
+        mock_validator.stub(:job_num).and_return("job_122")
+        mock_validator.stub(:application_num).and_return('application_num')
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
@@ -141,7 +145,23 @@ describe MRBenchmark do
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
         benchmark.validator = mock_validator
-        expect(benchmark.run label).to eq(0)
+        result = {}
+        result[:label] =  "#{benchmark_config["benchmark"]}"\
+                          "_#{platform_config["platform"]}_#{platform_config["node_type"]}"\
+                          "_#{platform_config["hadoop_slaves"]}"
+        result[:benchmark] = benchmark_config["benchmark"]
+        result[:platform] = platform_config["platform"]
+        result[:run_options] =  benchmark_config["run_options"]
+        result[:input] = benchmark_config["platformspec"][platform]["input"]
+        result[:output] = benchmark_config["platformspec"][platform]["output"]
+        result[:hadoop_jar] = benchmark_config["platformspec"][platform]["hadoop_jar"].split("/")[-1]
+        result[:num_nodes] = platform_config["hadoop_slaves"]
+        result[:node_type] = platform_config["node_type"]
+        result[:jobflow_id] = platform_config["jobflow_id"]
+        result[:job_num] = mock_validator.job_num
+        result[:application_num] = mock_validator.application_num
+        result[:exit_code] = 0
+        expect(benchmark.run {}).to eq(result)
       end
     end
   end

@@ -13,20 +13,23 @@
 # limitations under the License
 
 require 'logging'
-
+require 'json'
 class MRValidator
   include Logging
-  attr_accessor :job_num, :bytes_written, :failure_reason
+  attr_accessor :job_num, :application_num, :failure_reason
   def initialize (
     job_run_pattern=/Running job: (job_\w*$)/,
+    application_pattern=/Submitted application\s*(application_[\d_]+) to ResourceManager/,
     failure_pattern=/Job\sjob_\d+_\d+\sfailed with state FAILED due to:\s*(.*$)/)
     
     @job_run_pattern = job_run_pattern
+    @application_pattern = application_pattern
     @failure_pattern = failure_pattern
   end
 
   def validate output
     @job_num = @job_run_pattern.match(output)[1] unless @job_run_pattern.match(output).nil?
+    @application_num = @application_pattern.match(output)[1] unless @application_pattern.match(output).nil?
     unless @failure_pattern.match(output).nil?
       @failure_reason = @failure_pattern.match(output)[1]
       logger.warn "Failed validation: #{@failure_reason}" 
@@ -34,4 +37,20 @@ class MRValidator
     end
     return true
   end
+end
+
+# Adapter for the JSONParser
+class JSONParser
+  include Logging
+  attr_reader :json 
+  def validate data
+    logger.debug "parsing: #{data}"
+    begin
+      @json = JSON.parse data
+      @json = @json['app']
+      logger.debug "json #{@json.to_s}"
+    rescue JSON::ParserError
+    end  
+    return true
+  end  
 end

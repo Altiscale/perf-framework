@@ -126,6 +126,6 @@ benchmark = benchmark_maker.load_factory(settings.benchmark_path,
                                          settings.platform_path,
                                          settings.output,
                                          settings.log_level)
-status = benchmark.run settings.label
-logger.debug "status #{status}"
-exit status
+result = benchmark.run({:label => settings.label})
+logger.debug "result #{result.to_s}"
+exit result[:exit_code]
