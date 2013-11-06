@@ -14,12 +14,12 @@
 # This class will copy the hadoop jar, clean up the output, and run an MR job
 
 require 'logging'
-require 'validators'
+require 'parsers'
 require 'writers'
 class MRBenchmark  
   include Logging
   #TODO: Exposed everything for testability. Need to find smarter way
-  attr_writer :writer, :validator, :uniquify
+  attr_writer :writer, :parser, :uniquify
   attr_reader :description
   def initialize (benchmark_config, platform_config, scp_uploader, ssh_command)
     @benchmark_config = benchmark_config
@@ -80,8 +80,8 @@ class MRBenchmark
     result[:node_type] = @platform_config["node_type"]
     result[:num_nodes] = @platform_config["hadoop_slaves"]
     result[:jobflow_id] = @platform_config["jobflow_id"]
-    result[:job_num] = @validator.job_num  
-    result[:application_num] = @validator.application_num
+    result[:job_num] = @parser.job_num  
+    result[:application_num] = @parser.application_num
     result
   end
 end

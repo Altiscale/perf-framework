@@ -89,7 +89,7 @@ describe "Factory classes" do
       it "creates a benchmark with the provided configuration" do
         emr_factory = MRFactory.new benchmark_config, platform_config, output_file
         benchmark = emr_factory.create_benchmark
-        expect(benchmark.instance_variable_get(:@validator)).to be_kind_of(MRValidator)
+        expect(benchmark.instance_variable_get(:@parser)).to be_kind_of(MRValidator)
         expect(benchmark.instance_variable_get(:@writer)).to be_kind_of(CSVWriter)
         expect(benchmark.instance_variable_get(:@scp_uploader)).to be_kind_of(SCPUploader)
         expect(benchmark.instance_variable_get(:@ssh_command)).to be_kind_of(SSHRun)

@@ -14,7 +14,7 @@
 
 # Creates the benchmark and associated classes
 require 'json'
-require 'validators'
+require 'parsers'
 require 'mr_benchmark'
 require 'writers'
 require 'logging'
@@ -30,27 +30,27 @@ class MRFactory
   end
 
   def create_benchmark
-    validator = MRValidator.new
+    parser = MRValidator.new
     host = @platform_config['host_name']
     user = @platform_config['user_name']
     ssh_key = @platform_config['ssh_private_key']
     
-    ssh_factory = SSHFactory.new(host, user, ssh_key, validator)
+    ssh_factory = SSHFactory.new(host, user, ssh_key, parser)
     benchmark = MRBenchmark.new(@benchmark_config, 
                                 @platform_config, 
                                 ssh_factory.scp, 
                                 ssh_factory.ssh)
     benchmark.writer = @writer
-    benchmark.validator = validator
+    benchmark.parser = parser
     benchmark
   end
 end
 
 class SSHFactory
   attr_reader :ssh, :scp
-  def initialize(host, user, ssh_key, validator=nil)
+  def initialize(host, user, ssh_key, parser=nil)
     @scp = SCPUploader.new(host, user, ssh_key)
-    @ssh = SSHRun.new(host, user, ssh_key, validator)
+    @ssh = SSHRun.new(host, user, ssh_key, parser)
   end
 end
 

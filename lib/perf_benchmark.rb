@@ -14,7 +14,7 @@
 
 require 'mr_benchmark'
 require 'commands'
-require 'validators'
+require 'parsers'
 require 'writers'
 require 'factories'
 require 'logging'

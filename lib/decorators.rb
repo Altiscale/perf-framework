@@ -40,7 +40,7 @@ class RemoteDistCP
     # make an ssh rest call
     rest_call = "curl --get \'http://localhost:9026/ws/v1/cluster/apps/#{application_num}\'"
     @ssh_command.execute rest_call
-    state =  @ssh_command.validator.json['state'] 
+    state =  @ssh_command.parser.json['state'] 
     logger.debug "state = #{state}"
     state == HADOOP_FINISHED_STATE
   end

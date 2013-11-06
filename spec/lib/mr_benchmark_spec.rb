@@ -37,9 +37,9 @@ describe MRBenchmark do
     output = benchmark_config["platformspec"][platform]["output"]
     describe MRBenchmark, "#populate_output" do
       it "returns a populated hash" do
-        mock_validator = double(MRValidator)
-        mock_validator.stub(:job_num).and_return("job_122")
-        mock_validator.stub(:application_num).and_return('application_num')
+        mock_parser = double(MRValidator)
+        mock_parser.stub(:job_num).and_return("job_122")
+        mock_parser.stub(:application_num).and_return('application_num')
         result = {}
         result[:label] = label
         result[:benchmark] = benchmark_config["benchmark"]
@@ -51,10 +51,10 @@ describe MRBenchmark do
         result[:num_nodes] = platform_config["hadoop_slaves"]
         result[:node_type] = platform_config["node_type"]
         result[:jobflow_id] = platform_config["jobflow_id"]
-        result[:job_num] = mock_validator.job_num
-        result[:application_num] = mock_validator.application_num
+        result[:job_num] = mock_parser.job_num
+        result[:application_num] = mock_parser.application_num
         benchmark = MRBenchmark.new benchmark_config, platform_config, double(SCPUploader), double(SSHRun)
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         expect(benchmark.populate_output(output, {:label => label})).to eq(result)
       end
     end
@@ -62,9 +62,9 @@ describe MRBenchmark do
     describe MRBenchmark, "#run" do
       it "copies hadoop jar if available" do
         benchmark_config["platformspec"][platform]["local_jar"] = "someJar"
-        mock_validator = double(MRValidator)
-        mock_validator.stub(:job_num).and_return("job_122")
-        mock_validator.stub(:application_num).and_return('application_num')
+        mock_parser = double(MRValidator)
+        mock_parser.stub(:job_num).and_return("job_122")
+        mock_parser.stub(:application_num).and_return('application_num')
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
@@ -73,27 +73,27 @@ describe MRBenchmark do
         mock_scp.should_receive(:upload).with(benchmark_config["platformspec"][platform]["local_jar"],\
         benchmark_config["platformspec"][platform]["hadoop_jar"])
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         benchmark.run
       end
       
       it "does not copy hadoop jar if not available" do
         benchmark_config["platformspec"][platform]["local_jar"] = nil
-        mock_validator = double(MRValidator).as_null_object
+        mock_parser = double(MRValidator).as_null_object
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
         mock_scp = double(SCPUploader)
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         benchmark.run
       end
       
       it "cleans output directory in hdfs" do
         benchmark_config["platformspec"][platform]["cleanup_command"] = "cleanup command"
         cleanup_command = benchmark_config["platformspec"][platform]["cleanup_command"]
-        mock_validator = double(MRValidator).as_null_object
+        mock_parser = double(MRValidator).as_null_object
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
@@ -102,14 +102,14 @@ describe MRBenchmark do
         mock_ssh.should_receive(:execute).with(hdfs_cleanup)
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         benchmark.run
       end
       
       it "swallows exception during cleaning of output directory in hdfs" do
         benchmark_config["platformspec"][platform]["cleanup_command"] = "cleanup command"
         cleanup_command = benchmark_config["platformspec"][platform]["cleanup_command"]
-        mock_validator = double(MRValidator).as_null_object
+        mock_parser = double(MRValidator).as_null_object
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
@@ -120,7 +120,7 @@ describe MRBenchmark do
         end
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         benchmark.run
       end
       
@@ -130,7 +130,7 @@ describe MRBenchmark do
         run_options = benchmark_config["run_options"]
         input = benchmark_config["platformspec"][platform]["input"] 
   
-        mock_validator = double(MRValidator).as_null_object
+        mock_parser = double(MRValidator).as_null_object
         mock_ssh = double(SSHRun)
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
@@ -144,7 +144,7 @@ describe MRBenchmark do
         mock_ssh.should_receive(:execute).with(hadoop_command)
         mock_scp = double(SCPUploader).as_null_object
         benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.validator = mock_validator
+        benchmark.parser = mock_parser
         result = {}
         result[:label] =  "#{benchmark_config["benchmark"]}"\
                           "_#{platform_config["platform"]}_#{platform_config["node_type"]}"\
@@ -158,8 +158,8 @@ describe MRBenchmark do
         result[:num_nodes] = platform_config["hadoop_slaves"]
         result[:node_type] = platform_config["node_type"]
         result[:jobflow_id] = platform_config["jobflow_id"]
-        result[:job_num] = mock_validator.job_num
-        result[:application_num] = mock_validator.application_num
+        result[:job_num] = mock_parser.job_num
+        result[:application_num] = mock_parser.application_num
         result[:exit_code] = 0
         expect(benchmark.run {}).to eq(result)
       end

@@ -14,8 +14,20 @@
 
 require 'logging'
 require 'json'
-class MRValidator
+module Parser
   include Logging
+  def validate data
+    logger.debug "validating #{data}"
+    return true
+  end
+  
+  def parse data
+    logger.debug "parsing #{data}"
+  end
+end
+
+class MRValidator
+  include Parser
   attr_accessor :job_num, :application_num, :failure_reason
   def initialize (
     job_run_pattern=/Running job: (job_\w*$)/,
@@ -40,10 +52,11 @@ class MRValidator
 end
 
 # Adapter for the JSONParser
-class JSONParser
-  include Logging
+class JSONParser 
+  include Parser
   attr_reader :json 
-  def validate data
+  
+  def parse data
     logger.debug "parsing: #{data}"
     begin
       @json = JSON.parse data
@@ -51,6 +64,5 @@ class JSONParser
       logger.debug "json #{@json.to_s}"
     rescue JSON::ParserError
     end  
-    return true
   end  
 end

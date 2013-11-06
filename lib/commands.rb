@@ -41,12 +41,12 @@ end
 
 class SSHRun
   include Logging
-  attr_reader :validator
-  def initialize host, user, ssh_key, validator=nil
+  attr_reader :parser
+  def initialize host, user, ssh_key, parser=nil
     @host = host
     @user = user
     @ssh_key = ssh_key
-    @validator = validator
+    @parser = parser
   end
 
   def execute command
@@ -82,12 +82,12 @@ class SSHRun
 
         channel.on_data do |c, data|
           logger.debug "regular #{data}"
-          @validator.validate(data) unless @validator.nil?
+          @parser.parse(data) unless @parser.nil?
         end
 
         channel.on_extended_data do |c, type, data|
-        #If validator is not null then we must validate, otherwise, no point validating output
-          log_and_exit "could not execute command #{command}" unless @validator.nil? || @validator.validate(data)
+        #If parser is not null then we must validate, otherwise, no point validating output
+          log_and_exit "could not execute command #{command}" unless @parser.nil? || @parser.validate(data)
           logger.debug "extended #{data}"
         end
 
