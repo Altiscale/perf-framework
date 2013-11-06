@@ -87,7 +87,7 @@ options = OptionParser.new do |opts|
   opts.on('-h',
           '--help',
           'Show this help.') do
-    logger.info options.to_s
+    puts options.to_s
     exit
   end
 end
@@ -103,19 +103,19 @@ begin
     end
   end
   unless missing.empty?
-    logger.warn "Missing required options: #{missing.join(', ')}"
-    logger.warn options
-    exit!
+    puts "Missing required options: #{missing.join(', ')}"
+    puts options.to_s
+    exit 1
   end
   unless LOG_LEVELS.include?(settings.log_level)
-    logger.warn "Invalid log_level (#{settings.log_level}). \
+    puts "Invalid log_level (#{settings.log_level}). \
     Valid values: #{LOG_LEVELS.join(', ')}"
-    exit!
+    exit 1
   end
 rescue OptionParser::InvalidOption, OptionParser::MissingArgument
-  logger.error $ERROR_INFO.to_s
-  logger.error options.to_s
-  exit!
+  puts $ERROR_INFO.to_s
+  puts options.to_s
+  exit 1
 end
 
 logger.level = log_map[settings.log_level]
