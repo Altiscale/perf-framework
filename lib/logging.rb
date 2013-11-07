@@ -14,6 +14,7 @@
 
 require 'logger'
 
+# Include this module to use logger
 module Logging
   # This is the magical bit that gets mixed into your classes
   def logger
@@ -26,6 +27,7 @@ module Logging
   end
 end
 
+# Wrapper for setting the log_level
 class CustomLogger < Logger
   LOG_LEVELS = %w(
     debug
@@ -34,11 +36,10 @@ class CustomLogger < Logger
     error
     fatal
   )
-  def level= log_level
+  def level=(log_level)
     puts "Setting log level to #{log_level}"
-    if !LOG_LEVELS.include?(log_level)
-      raise "Invalid log_level (#{log_level}).  Valid values: #{LOG_LEVELS.join(', ')}"
-    end
+    fail "Invalid log_level (#{log_level}).  "\
+    "Valid values: #{LOG_LEVELS.join(', ')}" unless LOG_LEVELS.include?(log_level)
     log_map = Hash[LOG_LEVELS.map.with_index.to_a]
     super(log_map[log_level])
   end

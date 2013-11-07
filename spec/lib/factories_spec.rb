@@ -14,44 +14,44 @@
 
 require 'spec_helper'
 
-describe BenchmarkMaker, "#load_factory" do
-  benchmark_path = "resources/wikilogs-config.json"
-  platform_path = "resources/emr-config.json"
-  output_file = "results.csv"
+describe BenchmarkMaker, '#load_factory' do
+  benchmark_path = 'resources/wikilogs-config.json'
+  platform_path = 'resources/emr-config.json'
+  output_file = 'results.csv'
   log_level = 'debug'
   benchmark_config = JSON.parse(File.read(benchmark_path))
   platform_config = JSON.parse(File.read(platform_path))
-  
-  it "creates a factory chain with one element" do
+
+  it 'creates a factory chain with one element' do
     factory_chain = [MRFactory.new(benchmark_config, platform_config, output_file)]
     factory_chain_from_loader = BenchmarkMaker.new
                                               .uniquify?(true)
-                                              .load_factory(benchmark_path, 
-                                                            platform_path, 
-                                                            output_file, 
+                                              .load_factory(benchmark_path,
+                                                            platform_path,
+                                                            output_file,
                                                             log_level)
-                                                   
-    mr_benchmark = factory_chain_from_loader.commands[0]                                                            
+
+    mr_benchmark = factory_chain_from_loader.commands[0]
     expect(factory_chain_from_loader).to be_kind_of(CommandChain)
     expect(mr_benchmark).to be_kind_of(MRBenchmark)
     expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
-    expect(mr_benchmark.instance_variable_get(:@benchmark_config)).to eq(benchmark_config)  
+    expect(mr_benchmark.instance_variable_get(:@benchmark_config)).to eq(benchmark_config)
     expect(mr_benchmark.instance_variable_get(:@platform_config)).to eq(platform_config)
   end
-  
-  it "creates a factory chain with two elements" do
+
+  it 'creates a factory chain with two elements' do
     factory_chain = [MRFactory.new(benchmark_config, platform_config, output_file),
                      RemoteDistCP.new(nil, '/from', '/to')]
     factory_chain_from_loader = BenchmarkMaker.new
                                                .with_copier('/from', '/to')
                                                .uniquify?(true)
-                                               .load_factory(benchmark_path, 
-                                                             platform_path, 
-                                                             output_file, 
+                                               .load_factory(benchmark_path,
+                                                             platform_path,
+                                                             output_file,
                                                              log_level)
-                                                
+
     mr_benchmark = factory_chain_from_loader.commands[0]
-    copier = factory_chain_from_loader.commands[1]                                                            
+    copier = factory_chain_from_loader.commands[1]
     expect(factory_chain_from_loader).to be_kind_of(CommandChain)
     expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
     expect(mr_benchmark).to be_kind_of(MRBenchmark)
@@ -59,34 +59,29 @@ describe BenchmarkMaker, "#load_factory" do
   end
 end
 
-describe "Factory classes" do
-  context "constructed from mock configuration hashes" do
-    platform = "emr"
-    benchmark = "fake"
+describe 'Factory classes' do
+  context 'constructed from mock configuration hashes' do
+    platform = 'emr'
+    benchmark = 'fake'
     benchmark_config = {}
-    benchmark_config["benchmark"] = benchmark
-    benchmark_config["platformspec"] = {}
-    benchmark_config["platformspec"][platform] = {}
-    benchmark_config["platformspec"][platform]["input"] = "someInput"
-    benchmark_config["platformspec"][platform]["output"] = "someOutput"
-    benchmark_config["run_option"] = "runSomething"
-    benchmark_config["platformspec"][platform]["hadoop_jar"] = "/path/to/jar"
+    benchmark_config['benchmark'] = benchmark
+    benchmark_config['platformspec'] = {}
+    benchmark_config['platformspec'][platform] = {}
+    benchmark_config['platformspec'][platform]['input'] = 'someInput'
+    benchmark_config['platformspec'][platform]['output'] = 'someOutput'
+    benchmark_config['run_option'] = 'runSomething'
+    benchmark_config['platformspec'][platform]['hadoop_jar'] = '/path/to/jar'
 
     platform_config = {}
-    platform_config["platform"] = platform
-    platform_config["hadoop_slaves"] = 13
-    platform_config["jobflow_id"] = "j-2342"
-    platform_config["host_name"] = "my.fake.host"
-    platform_config["user_name"] = "fake_user"
-    platform_config["ssh_private_key"] = "fake_key"
-    machine = platform_config["host_name"].split(".")[0]
-
-    output = "#{benchmark_config["platformspec"][platform]["output"]}/#{machine}"
-    label = "myNewJob"
-    output_file = "results.csv"
-    log_level = 'debug'
-    describe MRFactory, "#create_benchmark" do
-      it "creates a benchmark with the provided configuration" do
+    platform_config['platform'] = platform
+    platform_config['hadoop_slaves'] = 13
+    platform_config['jobflow_id'] = 'j-2342'
+    platform_config['host_name'] = 'my.fake.host'
+    platform_config['user_name'] = 'fake_user'
+    platform_config['ssh_private_key'] = 'fake_key'
+    output_file = 'results.csv'
+    describe MRFactory, '#create_benchmark' do
+      it 'creates a benchmark with the provided configuration' do
         emr_factory = MRFactory.new benchmark_config, platform_config, output_file
         benchmark = emr_factory.create_benchmark
         expect(benchmark.instance_variable_get(:@parser)).to be_kind_of(MRValidator)

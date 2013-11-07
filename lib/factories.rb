@@ -20,6 +20,7 @@ require 'writers'
 require 'logging'
 require 'decorators'
 
+# Creates the mr_benchmark
 class MRFactory
   include Logging
   attr_reader :benchmark_config, :platform_config
@@ -34,11 +35,11 @@ class MRFactory
     host = @platform_config['host_name']
     user = @platform_config['user_name']
     ssh_key = @platform_config['ssh_private_key']
-    
+
     ssh_factory = SSHFactory.new(host, user, ssh_key, parser)
-    benchmark = MRBenchmark.new(@benchmark_config, 
-                                @platform_config, 
-                                ssh_factory.scp, 
+    benchmark = MRBenchmark.new(@benchmark_config,
+                                @platform_config,
+                                ssh_factory.scp,
                                 ssh_factory.ssh)
     benchmark.writer = @writer
     benchmark.parser = parser
@@ -46,17 +47,19 @@ class MRFactory
   end
 end
 
+# Creates an ssh client
 class SSHFactory
   attr_reader :ssh, :scp
-  def initialize(host, user, ssh_key, parser=nil)
+  def initialize(host, user, ssh_key, parser = nil)
     @scp = SCPUploader.new(host, user, ssh_key)
     @ssh = SSHRun.new(host, user, ssh_key, parser)
   end
 end
 
+# A Command wrapper that executes a list of commands
 class CommandChain
   include Logging
-  def initialize (*commands)
+  def initialize(*commands)
     @commands = *commands
   end
 
@@ -65,54 +68,52 @@ class CommandChain
     self
   end
 
-  def run result
-    @commands.each do |cmd| 
-      logger.info "executing #{cmd.description}" 
+  def run(result)
+    @commands.each do |cmd|
+      logger.info "executing #{cmd.description}"
       result = cmd.run result
     end
     result
-  end  
-  
+  end
+
   def commands
     @commands.clone
   end
 end
 
+# Creates the benchmark
 class BenchmarkMaker
   include Logging
-  
+
   def uniquify?(uniquify)
     @uniquify = uniquify
     self
   end
-  
+
   def with_copier(from, to)
     @hdfs_from = from
     @s3_to = to
     self
   end
-  
-  def load_factory benchmark_path, platform_path, output_file, log_level
+
+  def load_factory(benchmark_path, platform_path, output_file, log_level)
     logger.level = log_level
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
-    benchmark_name = benchmark_config["benchmark"]
-    platform_name = platform_config["platform"]
-    
-    benchmark = MRFactory.new(benchmark_config, 
-                              platform_config, 
+    benchmark = MRFactory.new(benchmark_config,
+                              platform_config,
                               output_file)
                               .create_benchmark
-    benchmark.uniquify = @uniquify                          
-    chain = CommandChain.new(benchmark) 
+    benchmark.uniquify = @uniquify
+    chain = CommandChain.new(benchmark)
     host = platform_config['host_name']
     user = platform_config['user_name']
-    ssh_key = platform_config['ssh_private_key']                          
+    ssh_key = platform_config['ssh_private_key']
     ssh_factory = SSHFactory.new(host, user, ssh_key, JSONParser.new)
-    #May factor out to a factory later?
-    chain.add( RemoteDistCP.new( ssh_factory.ssh, 
-                                      @hdfs_from, 
-                                      @s3_to)) unless @hdfs_from.nil? or @s3_to.nil?
-    chain                                 
+    # May factor out to a factory later?
+    chain.add(RemoteDistCP.new(ssh_factory.ssh,
+                               @hdfs_from,
+                               @s3_to)) unless @hdfs_from.nil? || @s3_to.nil?
+    chain
   end
 end

@@ -25,24 +25,21 @@ class RemoteDistCP
     @description = "Copy  #{@hdfs_jhist_dir} => #{@s3_log_dir}"
   end
 
-  def run(prior_result={})
+  def run(prior_result = {})
     # somehow get the application_id here
-    until(job_finished?(prior_result[:application_num])) do
-      sleep JOB_STATUS_SLEEP_INTERNVAL
-    end 
+    sleep JOB_STATUS_SLEEP_INTERNVAL  until job_finished?(prior_result[:application_num])
     command = "hadoop distcp #{@hdfs_jhist_dir} #{@s3_log_dir}"
     status = @ssh_command.execute command
     status
   end
-  
+
   def job_finished?(application_num)
     return true if application_num.nil?
     # make an ssh rest call
     rest_call = "curl --get \'http://localhost:9026/ws/v1/cluster/apps/#{application_num}\'"
     @ssh_command.execute rest_call
-    state =  @ssh_command.parser.json['state'] 
+    state =  @ssh_command.parser.json['state']
     logger.debug "state = #{state}"
     state == HADOOP_FINISHED_STATE
   end
 end
-

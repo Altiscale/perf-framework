@@ -59,7 +59,7 @@ options = OptionParser.new do |opts|
           'output file to write the result') do |output|
     settings.output = output
   end
-  
+
   opts.on('-u',
           '--uniquify',
           'uniquify output') do |uniquify|
@@ -98,9 +98,7 @@ begin
   mandatory = [:benchmark_path, :platform_path]
   missing = []
   mandatory.each do |setting|
-    unless settings.marshal_dump.key?(setting)
-      missing << setting.to_s.gsub('_', '-')
-    end
+    missing << setting.to_s.gsub('_', '-') unless settings.marshal_dump.key?(setting)
   end
   unless missing.empty?
     puts "Missing required options: #{missing.join(', ')}"
@@ -121,11 +119,11 @@ end
 logger.level = log_map[settings.log_level]
 benchmark_maker = BenchmarkMaker.new
                                 .with_copier(settings.from_dir, settings.to_dir)
-                                .uniquify?(settings.uniquify)            
+                                .uniquify?(settings.uniquify)
 benchmark = benchmark_maker.load_factory(settings.benchmark_path,
                                          settings.platform_path,
                                          settings.output,
                                          settings.log_level)
-result = benchmark.run({:label => settings.label})
+result = benchmark.run(label: settings.label)
 logger.debug "result #{result.to_s}"
 exit result[:exit_code]
