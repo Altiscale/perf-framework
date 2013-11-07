@@ -9,6 +9,8 @@ test:
 
 gem:
 	gem build *.gemspec
+	
+release:
 	-gem inabox -g $(GEM_SOURCE) -V *.gem
 
 clean:
