@@ -13,23 +13,34 @@
 # limitations under the License
 
 # Decorators that wrap the benchmark to do additional work before and after
+module Decorator
+  attr_reader :description
+end
+# SSH and Distcp
 class RemoteDistCP
   include Logging
+  include Decorator
   HADOOP_FINISHED_STATE = 'FINISHED'
   JOB_STATUS_SLEEP_INTERNVAL = 15
-  attr_reader :description
-  def initialize(ssh_command, hdfs_jhist_dir, s3_log_dir)
+  def initialize(ssh_command, from_dir, to_dir, force = false)
     @ssh_command = ssh_command
-    @hdfs_jhist_dir = hdfs_jhist_dir
-    @s3_log_dir = s3_log_dir
-    @description = "Copy  #{@hdfs_jhist_dir} => #{@s3_log_dir}"
+    @from_dir = from_dir
+    @to_dir = to_dir
+    @force = force
+    @description = "Copy  #{@from_dir} => #{@to_dir} (force: #{@force})"
   end
 
   def run(prior_result = {})
     # somehow get the application_id here
     sleep JOB_STATUS_SLEEP_INTERNVAL  until job_finished?(prior_result[:application_num])
-    command = "hadoop distcp #{@hdfs_jhist_dir} #{@s3_log_dir}"
-    status = @ssh_command.execute command
+    ok_to_copy = @force
+    @ssh_command.execute "hadoop fs -ls #{@to_dir}" do |data|
+      ok_to_copy ||= dest_not_found(data)
+    end
+    command = "hadoop distcp #{@from_dir} #{@to_dir}"
+    status = { exit_code: 0 }
+    logger.info "Aborting copy to #{@to_dir}" unless ok_to_copy
+    status = @ssh_command.execute command if ok_to_copy
     status
   end
 
@@ -37,9 +48,37 @@ class RemoteDistCP
     return true if application_num.nil?
     # make an ssh rest call
     rest_call = "curl --get \'http://localhost:9026/ws/v1/cluster/apps/#{application_num}\'"
-    @ssh_command.execute rest_call
-    state =  @ssh_command.parser.json['state']
+    state = nil
+    @ssh_command.execute rest_call do |data|
+      begin
+        json = JSON.parse data
+        state = json['app']['state']
+        logger.debug "json #{json.to_s}"
+      rescue JSON::ParserError => e
+        logger.debug "parse error"
+      end
+    end
     logger.debug "state = #{state}"
     state == HADOOP_FINISHED_STATE
+  end
+  
+  def dest_not_found(data)
+    !/ls: \`#{Regexp.escape(@to_dir)}': No such file or directory/.match(data).nil?
+  end
+end
+
+# Does an Scp
+class RemoteSCP
+  include Decorator
+  include Logging
+  def initialize(scp, from_dir, to_dir)
+    @scp = scp
+    @from_dir = from_dir
+    @to_dir = to_dir
+    @description = "scp  #{@from_dir} => #{@to_dir})"
+  end
+
+  def run(prior_result = {})
+    @scp.upload @from_dir, @to_dir
   end
 end

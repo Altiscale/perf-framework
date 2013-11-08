@@ -1,40 +1,57 @@
 {
-	"benchmark": "wikilogs",
-	"run_options":"-Dmapreduce.wikilogs.output.replication=3",
-	"platformspec": {
-		"testplatform": {
-			"jarfilename": "/path/to/test/hadoop-examples-3.1.4.jar"
-		},
-		"vcwb": {
-			"jarfilename": "/usr/share/hadoop/hadoop-examples-1.0.0.jar"
-		},
-		"vcwb2": {
-			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.2-5-alpha.jar",
-
-			"max_validate_bytes": 40
-		},
-		"alti": {
-			"input": "<input>",
-			"output": "<output>",
-			"hadoop_jar": "<hadoop_jar>",
-			"local_jar": "local_jar",
-			"main_class": "main_class",
-			"max_validate_bytes": 40,
-			"cleanup_command": "cleanup_command"
-		},
-		"emr": {
-			"input": "<input>",
-			"output": "<output>",
-			"hadoop_jar": "<hadoop_jar>",
-			"local_jar": "local_jar",
-			"main_class": "main_class",
-			"max_validate_bytes": 40,
-			"cleanup_command": "cleanup_command"
-		},
-		"f4": {
-			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar",
-
-			"max_validate_bytes": 40
-		}
-	}
+    "benchmark": "wikilogs",
+    "platformspec": {
+        "alti": {
+            "cleanup_command": "-rm -r",
+            "hadoop_jar": "/home/deniss/WikiStats.jar",
+            "input": "/wikilogs-5gb/",
+            "main_class": "org.apache.hadoop.examples.WikiStats",
+            "output": "/out",
+            "post_transfers": [
+                {
+                    "from": "/tmp/hadoop-yarn/staging/history",
+                    "to": "s3://dp-138-perf/jhist"
+                }
+            ],
+            "pre_transfers": [
+                {
+                    "scp": "true",
+                    "from": "/Users/ashahab/dev/perf/perf-configs/WikiStats_lzo.jar",
+                    "to": "/home/deniss/WikiStats.jar"
+                },
+                {
+                    "from": "s3://wikilogs-5gb/",
+                    "to": "/wikilogs-5gb/"
+                }
+            ],
+            "run_options": "-Dmapreduce.wikilogs.output.replication=3 -z"
+        },
+        "emr": {
+            "cleanup_command": "-rm -r",
+            "hadoop_jar": "/home/hadoop/WikiStats.jar",
+            "input": "/wikilogs-1gb/",
+            "main_class": "org.apache.hadoop.examples.WikiStats",
+            "output": "s3://dp-138-perf/out/test",
+            "post_transfers": [
+                {
+                    "force": "true",
+                    "from": "/tmp/hadoop-yarn/staging/history",
+                    "to": "s3://dp-138-perf/out/jhist"
+                }
+            ],
+            "pre_transfers": [
+                {
+                    "scp": "true",
+                    "from": "/Users/ashahab/dev/perf/perf-configs/WikiStats_lzo.jar",
+                    "to": "/home/hadoop/WikiStats.jar"
+                },
+                {
+                    "force": "false",
+                    "from": "s3://wikilogs-1gb/",
+                    "to": "/wikilogs-1gb/"
+                }
+            ],
+            "run_options": "-Dmapreduce.wikilogs.output.replication=3 -z"
+        }
+    }
 }

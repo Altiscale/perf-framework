@@ -39,7 +39,6 @@ class MRFactory
     ssh_factory = SSHFactory.new(host, user, ssh_key, parser)
     benchmark = MRBenchmark.new(@benchmark_config,
                                 @platform_config,
-                                ssh_factory.scp,
                                 ssh_factory.ssh)
     benchmark.writer = @writer
     benchmark.parser = parser
@@ -63,21 +62,41 @@ class CommandChain
     @commands = *commands
   end
 
-  def add(cmd)
-    @commands << cmd
+  def add(*commands)
+    commands = commands.last if commands.last.is_a?(Array)
+    commands.each  do |cmd|
+      @commands << cmd unless cmd.nil?
+    end
     self
   end
 
   def run(result)
     @commands.each do |cmd|
       logger.info "executing #{cmd.description}"
-      result = cmd.run result
+      show_wait_spinner{result = cmd.run result}
     end
     result
   end
 
   def commands
     @commands.clone
+  end
+  
+  def show_wait_spinner(fps=10)
+    chars = %w[| / - \\]
+    delay = 1.0/fps
+    iter = 0
+    spinner = Thread.new do
+      while iter do  # Keep spinning until told otherwise
+        print chars[(iter+=1) % chars.length]
+        sleep delay
+        print '\b'
+      end
+    end
+    yield.tap{       # After yielding to the block, save the return value
+      iter = false   # Tell the thread to exit, cleaning up after itself…
+      spinner.join   # …and wait for it to do so.
+    }                # Use the block's return value as the method's
   end
 end
 
@@ -90,10 +109,15 @@ class BenchmarkMaker
     self
   end
 
-  def with_copier(from, to)
-    @hdfs_from = from
-    @s3_to = to
-    self
+  def transfers(transfers_array, ssh_factory)
+    transfer_list = []
+    transfers_array.each do |transfer|
+      force = !transfer['force'].nil? && transfer['force'] == 'true'
+      transfer_list << RemoteDistCP.new(ssh_factory.ssh, transfer['from'], transfer['to'], force) if transfer['scp'].nil?
+      transfer_list << RemoteSCP.new(ssh_factory.scp, transfer['from'], transfer['to']) unless transfer['scp'].nil?
+    end unless transfers_array.nil?
+    logger.debug "adding #{transfer_list.to_s}"
+    transfer_list
   end
 
   def load_factory(benchmark_path, platform_path, output_file, log_level)
@@ -105,15 +129,19 @@ class BenchmarkMaker
                               output_file)
                               .create_benchmark
     benchmark.uniquify = @uniquify
-    chain = CommandChain.new(benchmark)
     host = platform_config['host_name']
     user = platform_config['user_name']
     ssh_key = platform_config['ssh_private_key']
-    ssh_factory = SSHFactory.new(host, user, ssh_key, JSONParser.new)
-    # May factor out to a factory later?
-    chain.add(RemoteDistCP.new(ssh_factory.ssh,
-                               @hdfs_from,
-                               @s3_to)) unless @hdfs_from.nil? || @s3_to.nil?
+    ssh_factory = SSHFactory.new(host, user, ssh_key)
+
+    platform = platform_config['platform']
+    logger.debug "platform #{platform}"
+    pre_transfers = benchmark_config['platformspec'][platform]['pre_transfers']
+    post_transfers = benchmark_config['platformspec'][platform]['post_transfers']
+    chain = CommandChain.new
+    chain.add transfers pre_transfers, ssh_factory
+    chain.add benchmark
+    chain.add transfers post_transfers, ssh_factory
     chain
   end
 end

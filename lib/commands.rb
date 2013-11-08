@@ -27,6 +27,7 @@ class SCPUploader
   end
 
   def upload(local_file, remote_file)
+    result = { exit_code: 0 }
     Net::SCP.start(
       @host,
       @user,
@@ -35,8 +36,9 @@ class SCPUploader
       user_known_hosts_file: '/dev/null',
       global_known_hosts_file: '/dev/null') do |session|
       logger.info "Uploading #{local_file} to #{remote_file}"
-      session.upload! local_file, remote_file
+      session.upload!(local_file, remote_file)
     end
+    result
   end
 end
 
@@ -51,7 +53,7 @@ class SSHRun
     @parser = parser
   end
 
-  def execute(command)
+  def execute(command, &validator)
     status = {}
     Net::SSH.start(
       @host,
@@ -62,7 +64,7 @@ class SSHRun
       global_known_hosts_file: '/dev/null') do |session|
       logger.info "Logged into #{@host} to run #{command}"
       start_time = Time.now.to_i
-      status = execsh command, session, command
+      status = execsh command, session, command, &validator
       end_time = Time.now.to_i
       status[:start_time] = start_time
       status[:end_time] = end_time
@@ -76,21 +78,22 @@ class SSHRun
     fail "Fatal error: #{message}"
   end
 
-  def execsh(comment, session, command)
+  def execsh(comment, session, command, &validator)
     result = {}
     session.open_channel do |channel|
       channel.exec(command) do |ch, success|
         log_and_exit "could not execute command #{command}" unless success
 
         channel.on_data do |c, data|
-          logger.debug "regular #{data}"
-          @parser.parse(data) unless @parser.nil?
+          logger.debug "STDOUT #{data}"
+          validator.call(data) unless validator.nil?
         end
 
         channel.on_extended_data do |c, type, data|
         # If parser is not null then we must validate, otherwise, no point validating output
           log_and_exit "could not execute command #{command}" unless @parser.nil? || @parser.validate(data)
-          logger.debug "extended #{data}"
+          logger.debug "STDERR #{data}"
+          validator.call(data) unless validator.nil?
         end
 
         channel.on_close do |c|

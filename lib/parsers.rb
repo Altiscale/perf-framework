@@ -13,7 +13,6 @@
 # limitations under the License
 
 require 'logging'
-require 'json'
 # Base parser. Declares no-op validate and parse
 module Parser
   include Logging
@@ -21,12 +20,9 @@ module Parser
     logger.debug "validating #{data}"
     true
   end
-
-  def parse(data)
-    logger.debug "parsing #{data}"
-  end
 end
 
+# TODO: Ideally this should be a block or a proc
 # Validates input and extracts the job number and the application number
 class MRValidator
   include Parser
@@ -50,22 +46,5 @@ class MRValidator
       return false
     end
     true
-  end
-end
-
-# Adapter for the JSONParser
-class JSONParser
-  include Parser
-  attr_reader :json
-
-  def parse(data)
-    logger.debug "parsing: #{data}"
-    begin
-      @json = JSON.parse data
-      @json = @json['app']
-      logger.debug "json #{@json.to_s}"
-    rescue JSON::ParserError => e
-      logger.warn "parse error: #{e.backtrace}"
-    end
   end
 end
