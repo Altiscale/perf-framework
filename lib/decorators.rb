@@ -82,3 +82,48 @@ class RemoteSCP
     @scp.upload @from_dir, @to_dir
   end
 end
+
+# A Command wrapper that executes a list of commands
+class CommandChain
+  include Logging
+  def initialize(*commands)
+    @commands = *commands
+  end
+
+  def add(*commands)
+    commands = commands.last if commands.last.is_a?(Array)
+    commands.each  do |cmd|
+      @commands << cmd unless cmd.nil?
+    end
+    self
+  end
+
+  def run(result)
+    @commands.each do |cmd|
+      logger.info "executing #{cmd.description}"
+      show_wait_spinner{result = cmd.run result}
+    end
+    result
+  end
+
+  def commands
+    @commands.clone
+  end
+
+  def show_wait_spinner(fps=10)
+    chars = %w[| / - \\]
+    delay = 1.0/fps
+    iter = 0
+    spinner = Thread.new do
+      while iter do  # Keep spinning until told otherwise
+        print chars[(iter+=1) % chars.length]
+        sleep delay
+        print "\b"
+      end
+    end
+    yield.tap{       # After yielding to the block, save the return value
+      iter = false   # Tell the thread to exit, cleaning up after itself…
+      spinner.join   # …and wait for it to do so.
+    }                # Use the block's return value as the method's
+  end
+end
