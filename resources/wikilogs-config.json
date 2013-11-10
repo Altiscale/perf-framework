@@ -1,57 +1,30 @@
 {
-    "benchmark": "wikilogs",
+    "benchmark": "<benchmark_name>",
     "platformspec": {
-        "alti": {
-            "cleanup_command": "-rm -r",
-            "hadoop_jar": "/home/deniss/WikiStats.jar",
-            "input": "/wikilogs-5gb/",
-            "main_class": "org.apache.hadoop.examples.WikiStats",
-            "output": "/out",
+        "<platform_name>": {
+            "cleanup_command": "<a cleanup command to cleanup the output dir>",
+            "hadoop_jar": "<path/to/hadoop/jar/on/cluster>",
+            "input": "<hdfs or s3 path to input>",
+            "main_class": "<main java class of the hadoop jar>",
+            "output": "<hdfs or s3 path to output>",
             "post_transfers": [
                 {
-                    "from": "/tmp/hadoop-yarn/staging/history",
-                    "to": "s3://dp-138-perf/jhist"
+                    "from": "<hdfs or s3 from directory>",
+                    "to": "<hdfs or s3 to directory>"
                 }
             ],
             "pre_transfers": [
                 {
-                    "scp": "true",
-                    "from": "/Users/ashahab/dev/perf/perf-configs/WikiStats_lzo.jar",
-                    "to": "/home/deniss/WikiStats.jar"
+                    "scp": "<true to indicate that this would be a scp copy>",
+                    "from": "<local directory>",
+                    "to": "<directory on cluster host(emr host or desktop)>"
                 },
                 {
-                    "from": "s3://wikilogs-5gb/",
-                    "to": "/wikilogs-5gb/"
+                    "from": "<hdfs or s3 from directory>",
+                    "to": "<hdfs or s3 to directory>"
                 }
             ],
-            "run_options": "-Dmapreduce.wikilogs.output.replication=3 -z"
-        },
-        "emr": {
-            "cleanup_command": "-rm -r",
-            "hadoop_jar": "/home/hadoop/WikiStats.jar",
-            "input": "/wikilogs-1gb/",
-            "main_class": "org.apache.hadoop.examples.WikiStats",
-            "output": "s3://dp-138-perf/out/test",
-            "post_transfers": [
-                {
-                    "force": "true",
-                    "from": "/tmp/hadoop-yarn/staging/history",
-                    "to": "s3://dp-138-perf/out/jhist"
-                }
-            ],
-            "pre_transfers": [
-                {
-                    "scp": "true",
-                    "from": "/Users/ashahab/dev/perf/perf-configs/WikiStats_lzo.jar",
-                    "to": "/home/hadoop/WikiStats.jar"
-                },
-                {
-                    "force": "false",
-                    "from": "s3://wikilogs-1gb/",
-                    "to": "/wikilogs-1gb/"
-                }
-            ],
-            "run_options": "-Dmapreduce.wikilogs.output.replication=3 -z"
+            "run_options": "<run options for the hadoop jar>"
         }
     }
 }
