@@ -22,7 +22,6 @@ module Parser
   end
 end
 
-# TODO: Ideally this should be a block or a proc
 # Validates input and extracts the job number and the application number
 class MRValidator
   include Parser
