@@ -19,7 +19,7 @@ describe RemoteDistCP, '#run' do
   to_dir = 'to/my/dest'
   it 'job finished' do
     ssh = double(SSHRun)
-    ssh.should_receive(:execute).with(anything)   
+    ssh.should_receive(:execute).with(anything)
     distcp = "hadoop distcp #{from_dir} #{to_dir}"
     ssh.should_receive(:execute).with(distcp)
     RemoteDistCP.new(ssh, from_dir, to_dir, true).run

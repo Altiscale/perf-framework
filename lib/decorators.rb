@@ -55,13 +55,13 @@ class RemoteDistCP
         state = json['app']['state']
         logger.debug "json #{json.to_s}"
       rescue JSON::ParserError => e
-        logger.debug "parse error"
+        logger.debug "parse error #{e}"
       end
     end
     logger.debug "state = #{state}"
     state == HADOOP_FINISHED_STATE
   end
-  
+
   def dest_not_found(data)
     !/ls: \`#{Regexp.escape(@to_dir)}': No such file or directory/.match(data).nil?
   end
@@ -101,7 +101,7 @@ class CommandChain
   def run(result)
     @commands.each do |cmd|
       logger.info "executing #{cmd.description}"
-      show_wait_spinner{result = cmd.run result}
+      show_wait_spinner { result = cmd.run result }
     end
     result
   end
@@ -110,20 +110,20 @@ class CommandChain
     @commands.clone
   end
 
-  def show_wait_spinner(fps=10)
+  def show_wait_spinner(fps = 10)
     chars = %w[| / - \\]
-    delay = 1.0/fps
+    delay = 1.0 / fps
     iter = 0
     spinner = Thread.new do
-      while iter do  # Keep spinning until told otherwise
-        print chars[(iter+=1) % chars.length]
+      while iter # Keep spinning until told otherwise
+        print chars[(iter += 1) % chars.length]
         sleep delay
         print "\b"
       end
     end
-    yield.tap{       # After yielding to the block, save the return value
-      iter = false   # Tell the thread to exit, cleaning up after itself…
-      spinner.join   # …and wait for it to do so.
-    }                # Use the block's return value as the method's
+    yield.tap do     # After yielding to the block, save the return value
+      iter = false   # Tell the thread to exit, cleaning up after itself
+      spinner.join   # and wait for it to do so.
+    end              # Use the block's return value as the method's
   end
 end
