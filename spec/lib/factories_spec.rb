@@ -13,7 +13,7 @@
 # limitations under the License
 
 require 'spec_helper'
-
+require 'tempfile'
 describe BenchmarkMaker, '#load_factory' do
   output_file = 'results.csv'
   log_level = 'debug'
@@ -40,7 +40,7 @@ describe BenchmarkMaker, '#load_factory' do
 
   it 'creates a factory chain with more than one elements' do
     benchmark_path = 'resources/wikilogs-config.json'
-    platform_path = 'resources/alti-config.json'
+    platform_path = 'resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
     factory_chain = [RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
@@ -64,7 +64,7 @@ end
 
 describe 'Factory classes' do
   context 'constructed from mock configuration hashes' do
-    platform = 'emr'
+    platform = '<platform_name>'
     benchmark = 'fake'
     benchmark_config = {}
     benchmark_config['benchmark'] = benchmark

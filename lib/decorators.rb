@@ -33,14 +33,11 @@ class RemoteDistCP
   def run(prior_result = {})
     # somehow get the application_id here
     sleep JOB_STATUS_SLEEP_INTERNVAL  until job_finished?(prior_result[:application_num])
-    ok_to_copy = @force
-    @ssh_command.execute "hadoop fs -ls #{@to_dir}" do |data|
-      ok_to_copy ||= dest_not_found(data)
-    end
+    dir_exists_status = @ssh_command.execute "hadoop fs -test -d #{@to_dir}"
+    ok_to_copy = @force || dir_exists_status[:exit_code] == 1
     command = "hadoop distcp #{@from_dir} #{@to_dir}"
-    status = { exit_code: 0 }
     logger.info "Aborting copy to #{@to_dir}" unless ok_to_copy
-    status = @ssh_command.execute command if ok_to_copy
+    status = ok_to_copy ? @ssh_command.execute(command) : nil
     status
   end
 
@@ -53,17 +50,12 @@ class RemoteDistCP
       begin
         json = JSON.parse data
         state = json['app']['state']
-        logger.debug "json #{json.to_s}"
       rescue JSON::ParserError => e
         logger.debug "parse error #{e}"
       end
     end
     logger.debug "state = #{state}"
     state == HADOOP_FINISHED_STATE
-  end
-
-  def dest_not_found(data)
-    !/ls: \`#{Regexp.escape(@to_dir)}': No such file or directory/.match(data).nil?
   end
 end
 
@@ -98,12 +90,15 @@ class CommandChain
     self
   end
 
-  def run(result)
+  def run(prior_result = {})
     @commands.each do |cmd|
       logger.info "executing #{cmd.description}"
-      show_wait_spinner { result = cmd.run result }
+      show_wait_spinner do
+        result = cmd.run prior_result
+        prior_result = result.nil? ? prior_result : result.merge(prior_result)
+      end
     end
-    result
+    prior_result
   end
 
   def commands

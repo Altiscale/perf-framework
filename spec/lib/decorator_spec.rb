@@ -17,22 +17,20 @@ require 'spec_helper'
 describe RemoteDistCP, '#run' do
   from_dir = 'from/my/source'
   to_dir = 'to/my/dest'
-  it 'job finished' do
+  it 'invokes distcp from_dir to to_dir' do
     ssh = double(SSHRun)
     ssh.should_receive(:execute).with(anything)
     distcp = "hadoop distcp #{from_dir} #{to_dir}"
     ssh.should_receive(:execute).with(distcp)
     RemoteDistCP.new(ssh, from_dir, to_dir, true).run
   end
-end
 
-describe RemoteDistCP, '#dest_not_found' do
-  from_dir = 'from/my/source'
-  to_dir = 'to/my/dest'
-  it 'does not invoke upload if force is false and destination found' do
+  it 'does not invoke distcp if force is false and destination found' do
     ssh = double(SSHRun)
-    command = "hadoop fs -ls #{to_dir}"
-    ssh.should_receive(:execute).with(command)
-    expect(RemoteDistCP.new(ssh, from_dir, to_dir).run).to eql(exit_code: 0)
+    command = "hadoop fs -test -d #{to_dir}"
+    ssh.stub(:execute).with(command) do
+      { exit_code: 0 }
+    end
+    expect(RemoteDistCP.new(ssh, from_dir, to_dir).run).to eql(nil)
   end
 end
