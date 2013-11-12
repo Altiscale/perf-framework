@@ -13,16 +13,15 @@
 # limitations under the License
 
 require 'spec_helper'
-
+require 'tempfile'
 describe BenchmarkMaker, '#load_factory' do
-  benchmark_path = 'resources/wikilogs-config.json'
-  platform_path = 'resources/emr-config.json'
   output_file = 'results.csv'
   log_level = 'debug'
-  benchmark_config = JSON.parse(File.read(benchmark_path))
-  platform_config = JSON.parse(File.read(platform_path))
-
   it 'creates a factory chain with one element' do
+    benchmark_path = 'resources/bare-wikilogs-config.json'
+    platform_path = 'resources/emr-config.json'
+    benchmark_config = JSON.parse(File.read(benchmark_path))
+    platform_config = JSON.parse(File.read(platform_path))
     factory_chain = [MRFactory.new(benchmark_config, platform_config, output_file)]
     factory_chain_from_loader = BenchmarkMaker.new
                                               .uniquify?(true)
@@ -39,18 +38,22 @@ describe BenchmarkMaker, '#load_factory' do
     expect(mr_benchmark.instance_variable_get(:@platform_config)).to eq(platform_config)
   end
 
-  it 'creates a factory chain with two elements' do
-    factory_chain = [MRFactory.new(benchmark_config, platform_config, output_file),
-                     RemoteDistCP.new(nil, '/from', '/to')]
+  it 'creates a factory chain with more than one elements' do
+    benchmark_path = 'resources/wikilogs-config.json'
+    platform_path = 'resources/emr-config.json'
+    benchmark_config = JSON.parse(File.read(benchmark_path))
+    platform_config = JSON.parse(File.read(platform_path))
+    factory_chain = [RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
+                     RemoteDistCP.new(nil, 's3://wikilogs-5gb', '/wikilogs-5gb'),
+                     MRFactory.new(benchmark_config, platform_config, output_file),
+                     RemoteDistCP.new(nil, '/tmp/hadoop-yarn/staging/history', 's3://dp-138-perf/jhist')]
     factory_chain_from_loader = BenchmarkMaker.new
-                                               .with_copier('/from', '/to')
                                                .uniquify?(true)
                                                .load_factory(benchmark_path,
                                                              platform_path,
                                                              output_file,
                                                              log_level)
-
-    mr_benchmark = factory_chain_from_loader.commands[0]
+    mr_benchmark = factory_chain_from_loader.commands[2]
     copier = factory_chain_from_loader.commands[1]
     expect(factory_chain_from_loader).to be_kind_of(CommandChain)
     expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
@@ -61,7 +64,7 @@ end
 
 describe 'Factory classes' do
   context 'constructed from mock configuration hashes' do
-    platform = 'emr'
+    platform = '<platform_name>'
     benchmark = 'fake'
     benchmark_config = {}
     benchmark_config['benchmark'] = benchmark
@@ -86,7 +89,6 @@ describe 'Factory classes' do
         benchmark = emr_factory.create_benchmark
         expect(benchmark.instance_variable_get(:@parser)).to be_kind_of(MRValidator)
         expect(benchmark.instance_variable_get(:@writer)).to be_kind_of(CSVWriter)
-        expect(benchmark.instance_variable_get(:@scp_uploader)).to be_kind_of(SCPUploader)
         expect(benchmark.instance_variable_get(:@ssh_command)).to be_kind_of(SSHRun)
       end
     end

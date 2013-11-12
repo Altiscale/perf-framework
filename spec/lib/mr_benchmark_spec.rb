@@ -23,7 +23,7 @@ describe MRBenchmark do
     benchmark_config['platformspec'][platform]['input'] = 'someInput'
     benchmark_config['platformspec'][platform]['output'] = 'someOutput'
     benchmark_config['run_option'] = 'runSomething'
-    benchmark_config['platformspec'][platform]['hadoop_jar'] = '/path/to/jar'
+    benchmark_config['platformspec'][platform]['hadoop_jar'] = '/path/to/runjob.jar'
     platform_config = {}
     platform_config['platform'] = platform
     platform_config['hadoop_slaves'] = 13
@@ -50,43 +50,13 @@ describe MRBenchmark do
         result[:jobflow_id] = platform_config['jobflow_id']
         result[:job_num] = mock_parser.job_num
         result[:application_num] = mock_parser.application_num
-        benchmark = MRBenchmark.new benchmark_config, platform_config, double(SCPUploader), double(SSHRun)
+        benchmark = MRBenchmark.new benchmark_config, platform_config, double(SSHRun)
         benchmark.parser = mock_parser
         expect(benchmark.populate_output(output, label: label)).to eq(result)
       end
     end
 
     describe MRBenchmark, '#run' do
-      it 'copies hadoop jar if available' do
-        benchmark_config['platformspec'][platform]['local_jar'] = 'someJar'
-        mock_parser = double(MRValidator)
-        mock_parser.stub(:job_num).and_return('job_122')
-        mock_parser.stub(:application_num).and_return('application_num')
-        mock_ssh = double(SSHRun)
-        mock_ssh.stub(:execute).with(an_instance_of(String)) do
-          {}
-        end
-        mock_scp = double(SCPUploader)
-        mock_scp.should_receive(:upload).with(benchmark_config['platformspec'][platform]['local_jar'],
-                                              benchmark_config['platformspec'][platform]['hadoop_jar'])
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.parser = mock_parser
-        benchmark.run
-      end
-
-      it 'does not copy hadoop jar if not available' do
-        benchmark_config['platformspec'][platform]['local_jar'] = nil
-        mock_parser = double(MRValidator).as_null_object
-        mock_ssh = double(SSHRun)
-        mock_ssh.stub(:execute).with(an_instance_of(String)) do
-          {}
-        end
-        mock_scp = double(SCPUploader)
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
-        benchmark.parser = mock_parser
-        benchmark.run
-      end
-
       it 'cleans output directory in hdfs' do
         benchmark_config['platformspec'][platform]['cleanup_command'] = 'cleanup command'
         cleanup_command = benchmark_config['platformspec'][platform]['cleanup_command']
@@ -97,8 +67,7 @@ describe MRBenchmark do
         end
         hdfs_cleanup = "hadoop fs #{cleanup_command} #{output}"
         mock_ssh.should_receive(:execute).with(hdfs_cleanup)
-        mock_scp = double(SCPUploader).as_null_object
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
         benchmark.parser = mock_parser
         benchmark.run
       end
@@ -115,8 +84,7 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(hdfs_cleanup) do
           fail 'I will be swallowed'
         end
-        mock_scp = double(SCPUploader).as_null_object
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
         benchmark.parser = mock_parser
         benchmark.run
       end
@@ -139,8 +107,7 @@ describe MRBenchmark do
           job_status
         end
         mock_ssh.should_receive(:execute).with(hadoop_command)
-        mock_scp = double(SCPUploader).as_null_object
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_scp, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
         benchmark.parser = mock_parser
         result = {}
         result[:label] =  "#{benchmark_config["benchmark"]}"\

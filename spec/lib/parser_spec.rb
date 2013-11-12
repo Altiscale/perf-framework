@@ -48,12 +48,3 @@ describe MRValidator, '#validate' do
     parser.failure_reason.should eq('Task failed task_1381874118387_0206_r_000000')
   end
 end
-
-describe JSONParser, '#validate' do
-  it 'parses a json string' do
-    input = { 'app' => { 'status' => 'FINISHED' } }
-    parser = JSONParser.new
-    parser.parse input.to_json
-    expect(parser.json).to eq(input['app'])
-  end
-end

@@ -1,0 +1,13 @@
+{
+    "benchmark": "<benchmark_name>",
+    "platformspec": {
+        "<platform_name>": {
+            "cleanup_command": "<a cleanup command to cleanup the output dir>",
+            "hadoop_jar": "<path/to/hadoop/jar/on/cluster>",
+            "input": "<hdfs or s3 path to input>",
+            "main_class": "<main java class of the hadoop jar>",
+            "output": "<hdfs or s3 path to output>",
+            "run_options": "<run options for the hadoop jar>"
+        }
+    }
+}

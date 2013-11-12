@@ -66,18 +66,6 @@ options = OptionParser.new do |opts|
     settings.uniquify = true
   end
 
-  opts.on('-f',
-          '--from-dir DIRECTORY_PATH',
-          'HDFS or S3 directory') do |from_dir|
-    settings.from_dir = from_dir
-  end
-
-  opts.on('-t',
-          '--to-dir DIRECTORY_PATH',
-          'HDFS or S3 directory') do |to_dir|
-    settings.to_dir = to_dir
-  end
-
   opts.on('-j',
           '--job_label LABEL_NAME',
           'A label for the job') do |label|
@@ -117,9 +105,7 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
 end
 
 logger.level = log_map[settings.log_level]
-benchmark_maker = BenchmarkMaker.new
-                                .with_copier(settings.from_dir, settings.to_dir)
-                                .uniquify?(settings.uniquify)
+benchmark_maker = BenchmarkMaker.new.uniquify?(settings.uniquify)
 benchmark = benchmark_maker.load_factory(settings.benchmark_path,
                                          settings.platform_path,
                                          settings.output,

@@ -1,40 +1,30 @@
 {
-	"benchmark": "wikilogs",
-	"run_options":"-Dmapreduce.wikilogs.output.replication=3",
-	"platformspec": {
-		"testplatform": {
-			"jarfilename": "/path/to/test/hadoop-examples-3.1.4.jar"
-		},
-		"vcwb": {
-			"jarfilename": "/usr/share/hadoop/hadoop-examples-1.0.0.jar"
-		},
-		"vcwb2": {
-			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.2-5-alpha.jar",
-
-			"max_validate_bytes": 40
-		},
-		"alti": {
-			"input": "<input>",
-			"output": "<output>",
-			"hadoop_jar": "<hadoop_jar>",
-			"local_jar": "local_jar",
-			"main_class": "main_class",
-			"max_validate_bytes": 40,
-			"cleanup_command": "cleanup_command"
-		},
-		"emr": {
-			"input": "<input>",
-			"output": "<output>",
-			"hadoop_jar": "<hadoop_jar>",
-			"local_jar": "local_jar",
-			"main_class": "main_class",
-			"max_validate_bytes": 40,
-			"cleanup_command": "cleanup_command"
-		},
-		"f4": {
-			"jarfilename": "/opt/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.0.0-alpha.jar",
-
-			"max_validate_bytes": 40
-		}
-	}
+    "benchmark": "<benchmark_name>",
+    "platformspec": {
+        "<platform_name>": {
+            "cleanup_command": "<a cleanup command to cleanup the output dir>",
+            "hadoop_jar": "<path/to/hadoop/jar/on/cluster>",
+            "input": "<hdfs or s3 path to input>",
+            "main_class": "<main java class of the hadoop jar>",
+            "output": "<hdfs or s3 path to output>",
+            "post_transfers": [
+                {
+                    "from": "<hdfs or s3 from directory>",
+                    "to": "<hdfs or s3 to directory>"
+                }
+            ],
+            "pre_transfers": [
+                {
+                    "scp": "<true to indicate that this would be a scp copy>",
+                    "from": "<local directory>",
+                    "to": "<directory on cluster host(emr host or desktop)>"
+                },
+                {
+                    "from": "<hdfs or s3 from directory>",
+                    "to": "<hdfs or s3 to directory>"
+                }
+            ],
+            "run_options": "<run options for the hadoop jar>"
+        }
+    }
 }

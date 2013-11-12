@@ -21,12 +21,11 @@ class MRBenchmark
   # TODO: Exposed everything for testability. Need to find smarter way
   attr_writer :writer, :parser, :uniquify
   attr_reader :description
-  def initialize(benchmark_config, platform_config, scp_uploader, ssh_command)
+  def initialize(benchmark_config, platform_config, ssh_command)
     @benchmark_config = benchmark_config
     @platform_config = platform_config
     @benchmark = @benchmark_config['benchmark']
     @platform = @platform_config['platform']
-    @scp_uploader = scp_uploader
     @ssh_command = ssh_command
     @description = "mr job: #{@benchmark} on #{@platform}"
   end
@@ -36,17 +35,12 @@ class MRBenchmark
   #
   def run(result = {})
     cleanup_command =  @benchmark_config['platformspec'][@platform]['cleanup_command']
-    local_jar = @benchmark_config['platformspec'][@platform]['local_jar']
     hadoop_jar = @benchmark_config['platformspec'][@platform]['hadoop_jar']
     main_class = @benchmark_config['platformspec'][@platform]['main_class']
-    run_options = @benchmark_config['run_options']
+    run_options = @benchmark_config['platformspec'][@platform]['run_options']
     input = @benchmark_config['platformspec'][@platform]['input']
     output = @benchmark_config['platformspec'][@platform]['output']
     output = "#{output}/#{Time.now.to_i}" if @uniquify
-    # initalize the *Commands class
-    # scp the hadoop jar
-    @scp_uploader.upload local_jar, hadoop_jar unless local_jar.nil?
-    logger.debug 'Done copying jar'
     # hdfs cleanup
     begin
       @ssh_command.execute "hadoop fs #{cleanup_command} #{output}" unless cleanup_command.nil?
@@ -57,6 +51,7 @@ class MRBenchmark
     # run hadoop command
     hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
     job_status = @ssh_command.execute hadoop_command
+    logger.debug "job_status #{job_status}"
     result = populate_output output, result
     result.merge! job_status
     @writer.write result unless @writer.nil?
