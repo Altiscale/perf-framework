@@ -13,8 +13,42 @@
 # limitations under the License
 # Rakefile - for perf-framework
 
+# coding: utf-8
+require 'bundler/gem_tasks'
+require 'rake/clean'
 require 'rspec/core/rake_task'
-RSpec::Core::RakeTask.new('spec')
+require 'rubocop/rake_task'
 
-task :default => :spec
-task :test => :spec
+# Clobber should also clean up built packages
+CLOBBER.include('pkg')
+
+# Disable the push to rubygems.org
+Rake::Task[:release].clear
+
+# Use bundler to install deps since rake won't
+task :install_deps do
+  Bundler.with_clean_env do
+    sh 'bundle install --system'
+  end
+end
+
+RSpec::Core::RakeTask.new(:test) do |t|
+  Bundler.with_clean_env do
+    sh 'bundle install --system'
+  end
+end
+
+desc 'Run RuboCop on the lib directory'
+Rubocop::RakeTask.new(:lint) do |t|
+  t.patterns = ['lib/**/*.rb']
+  t.fail_on_error = false
+end
+
+Rake::Task[:install].enhance [:install_deps]
+
+task test: [:install_deps, :spec]
+
+task default: [:test]
+
+desc 'Run tests and build if successful'
+task all: [:test, :build]

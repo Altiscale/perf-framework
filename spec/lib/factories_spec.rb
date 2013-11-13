@@ -22,39 +22,62 @@ describe BenchmarkMaker, '#load_factory' do
     platform_path = 'resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
-    factory_chain = [MRFactory.new(benchmark_config, platform_config, output_file)]
-    factory_chain_from_loader = BenchmarkMaker.new
-                                              .uniquify?(true)
-                                              .load_factory(benchmark_path,
-                                                            platform_path,
-                                                            output_file,
-                                                            log_level)
+    factory_chain = [MRFactory.new(benchmark_config, output_file), EMRTerminator.new]
+    maker = BenchmarkMaker.new.uniquify?(true)
+    maker.benchmark_config = benchmark_config
+    factory_chain_from_loader = maker.load_factory(platform_config, output_file, log_level)
 
     mr_benchmark = factory_chain_from_loader.commands[0]
     expect(factory_chain_from_loader).to be_kind_of(CommandChain)
     expect(mr_benchmark).to be_kind_of(MRBenchmark)
     expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
     expect(mr_benchmark.instance_variable_get(:@benchmark_config)).to eq(benchmark_config)
-    expect(mr_benchmark.instance_variable_get(:@platform_config)).to eq(platform_config)
   end
 
-  it 'creates a factory chain with more than one elements' do
+  it 'creates a factory chain with more than one element' do
     benchmark_path = 'resources/wikilogs-config.json'
     platform_path = 'resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
     factory_chain = [RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
                      RemoteDistCP.new(nil, 's3://wikilogs-5gb', '/wikilogs-5gb'),
-                     MRFactory.new(benchmark_config, platform_config, output_file),
-                     RemoteDistCP.new(nil, '/tmp/hadoop-yarn/staging/history', 's3://dp-138-perf/jhist')]
-    factory_chain_from_loader = BenchmarkMaker.new
-                                               .uniquify?(true)
-                                               .load_factory(benchmark_path,
-                                                             platform_path,
-                                                             output_file,
-                                                             log_level)
+                     MRFactory.new(benchmark_config, output_file),
+                     RemoteDistCP.new(nil, '/tmp/hadoop-yarn/staging/history', 's3://dp-138-perf/jhist'),
+                     EMRTerminator.new]
+    maker = BenchmarkMaker.new.uniquify?(true)
+    maker.benchmark_config = benchmark_config
+    factory_chain_from_loader = maker.load_factory(platform_config, output_file, log_level)
     mr_benchmark = factory_chain_from_loader.commands[2]
     copier = factory_chain_from_loader.commands[1]
+    expect(factory_chain_from_loader).to be_kind_of(CommandChain)
+    expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
+    expect(mr_benchmark).to be_kind_of(MRBenchmark)
+    expect(copier).to be_kind_of(RemoteDistCP)
+  end
+  
+  it 'creates a factory chain with launch_emr' do
+    benchmark_path = 'resources/wikilogs-config.json'
+    platform_path = 'resources/emr-config.json'
+    benchmark_config = JSON.parse(File.read(benchmark_path))
+    platform_config = JSON.parse(File.read(platform_path))
+    platform_config['cluster_name'] = 'my_fake_cluster'
+    emr_launch_config = {}
+    
+    factory_chain = [EMRLauncher.new(platform_config['cluster_name'], emr_launch_config),
+                     RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
+                     RemoteDistCP.new(nil, 's3://wikilogs-5gb', '/wikilogs-5gb'),
+                     MRFactory.new(benchmark_config, output_file),
+                     RemoteDistCP.new(nil, '/tmp/hadoop-yarn/staging/history', 's3://dp-138-perf/jhist'),
+                     EMRTerminator.new]
+    maker = BenchmarkMaker.new.uniquify?(true)                                               
+    maker.emr_launch_config = emr_launch_config
+    maker.benchmark_config = benchmark_config
+    factory_chain_from_loader = maker.load_factory(platform_config, output_file, log_level)
+    emr_launcher = factory_chain_from_loader.commands[0]
+    mr_benchmark = factory_chain_from_loader.commands[3]
+    copier = factory_chain_from_loader.commands[2]
+    expect(emr_launcher.instance_variable_get(:@cluster_name)).to eq(platform_config['cluster_name'])
+    expect(emr_launcher.instance_variable_get(:@config)).to eq(emr_launch_config)
     expect(factory_chain_from_loader).to be_kind_of(CommandChain)
     expect(factory_chain_from_loader.commands.size).to eq(factory_chain.size)
     expect(mr_benchmark).to be_kind_of(MRBenchmark)
@@ -79,17 +102,16 @@ describe 'Factory classes' do
     platform_config['platform'] = platform
     platform_config['hadoop_slaves'] = 13
     platform_config['jobflow_id'] = 'j-2342'
-    platform_config['host_name'] = 'my.fake.host'
-    platform_config['user_name'] = 'fake_user'
+    platform_config['host'] = 'my.fake.host'
+    platform_config['user'] = 'fake_user'
     platform_config['ssh_private_key'] = 'fake_key'
     output_file = 'results.csv'
     describe MRFactory, '#create_benchmark' do
       it 'creates a benchmark with the provided configuration' do
-        emr_factory = MRFactory.new benchmark_config, platform_config, output_file
+        emr_factory = MRFactory.new benchmark_config, output_file
         benchmark = emr_factory.create_benchmark
         expect(benchmark.instance_variable_get(:@parser)).to be_kind_of(MRValidator)
         expect(benchmark.instance_variable_get(:@writer)).to be_kind_of(CSVWriter)
-        expect(benchmark.instance_variable_get(:@ssh_command)).to be_kind_of(SSHRun)
       end
     end
   end

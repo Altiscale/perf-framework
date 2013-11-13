@@ -13,6 +13,7 @@
 # limitations under the License
 require 'spec_helper'
 describe MRBenchmark do
+  include Logging
   context 'constructed from mock configuration hashes' do
     platform = 'emr'
     benchmark = 'fake'
@@ -28,7 +29,9 @@ describe MRBenchmark do
     platform_config['platform'] = platform
     platform_config['hadoop_slaves'] = 13
     platform_config['jobflow_id'] = 'j-2342'
-    platform_config['host_name'] = 'my.fake.host'
+    platform_config['host'] = 'my.fake.host'
+    platform_config['user'] = 'fake_user'
+    platform_config['ssh_key'] = 'fake_key'
     platform_config['node_type'] = 'm2_very_large'
     label = 'myNewJob'
     output = benchmark_config['platformspec'][platform]['output']
@@ -49,10 +52,11 @@ describe MRBenchmark do
         result[:node_type] = platform_config['node_type']
         result[:jobflow_id] = platform_config['jobflow_id']
         result[:job_num] = mock_parser.job_num
-        result[:application_num] = mock_parser.application_num
-        benchmark = MRBenchmark.new benchmark_config, platform_config, double(SSHRun)
+        result[:application_num] = mock_parser.application_num 
+        benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
-        expect(benchmark.populate_output(output, label: label)).to eq(result)
+        benchmark.instance_variable_set(:@platform, platform_config['platform'])
+        expect(benchmark.populate_output output, platform_config.merge({ label: label })).to eq(result)
       end
     end
 
@@ -65,11 +69,14 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
+        SSHRun.stub(:new).with( platform_config['host'],
+                                platform_config['user'],
+                                platform_config['ssh_key']).and_return(mock_ssh)
         hdfs_cleanup = "hadoop fs #{cleanup_command} #{output}"
         mock_ssh.should_receive(:execute).with(hdfs_cleanup)
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
-        benchmark.run
+        benchmark.run platform_config.merge({ label: label })
       end
 
       it 'swallows exception during cleaning of output directory in hdfs' do
@@ -80,13 +87,16 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
+        SSHRun.stub(:new).with( platform_config['host'],
+                                platform_config['user'],
+                                platform_config['ssh_key']).and_return(mock_ssh)
         hdfs_cleanup = "hadoop fs #{cleanup_command} #{output}"
         mock_ssh.stub(:execute).with(hdfs_cleanup) do
           fail 'I will be swallowed'
         end
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
-        benchmark.run
+        benchmark.run platform_config.merge({ label: label })
       end
 
       it 'runs a hadoop job' do
@@ -100,14 +110,16 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
-
+        SSHRun.stub(:new).with( platform_config['host'],
+                                platform_config['user'],
+                                platform_config['ssh_key']).and_return(mock_ssh)
         hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
         job_status = { exit_code: 0 }
         mock_ssh.stub(:execute).with(hadoop_command) do
           job_status
         end
         mock_ssh.should_receive(:execute).with(hadoop_command)
-        benchmark = MRBenchmark.new benchmark_config, platform_config, mock_ssh
+        benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
         result = {}
         result[:label] =  "#{benchmark_config["benchmark"]}"\
@@ -125,7 +137,8 @@ describe MRBenchmark do
         result[:job_num] = mock_parser.job_num
         result[:application_num] = mock_parser.application_num
         result[:exit_code] = 0
-        expect(benchmark.run {}).to eq(result)
+        logger.debug "result #{result[:label]}"
+        expect(benchmark.run platform_config).to eq(result)
       end
     end
   end
