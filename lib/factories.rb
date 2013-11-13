@@ -55,7 +55,7 @@ class BenchmarkMaker
     @uniquify = uniquify
     self
   end
-  
+
   def keep_alive?(keep_alive)
     @keep_alive = keep_alive
     self
@@ -80,7 +80,7 @@ class BenchmarkMaker
       platform = platform_config['platform']
       pre_transfers = @benchmark_config['platformspec'][platform]['pre_transfers']
       post_transfers = @benchmark_config['platformspec'][platform]['post_transfers']
-    end  
+    end
     chain = CommandChain.new
     chain.add EMRLauncher.new platform_config['cluster_name'], @emr_launch_config unless @emr_launch_config.nil?
     chain.add transfers pre_transfers

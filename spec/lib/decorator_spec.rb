@@ -23,9 +23,9 @@ describe RemoteDistCP, '#run' do
     ssh.should_receive(:execute).with(anything)
     distcp = "hadoop distcp #{from_dir} #{to_dir}"
     ssh.should_receive(:execute).with(distcp)
-    SSHRun.stub(:new).with( platform_config['host'],
-                            platform_config['user'],
-                            platform_config['ssh_key']).and_return(ssh)
+    SSHRun.stub(:new).with(platform_config['host'],
+                           platform_config['user'],
+                           platform_config['ssh_key']).and_return(ssh)
     RemoteDistCP.new(from_dir, to_dir, true).run platform_config
   end
 
@@ -35,9 +35,9 @@ describe RemoteDistCP, '#run' do
     ssh.stub(:execute).with(command) do
       { exit_code: 0 }
     end
-    SSHRun.stub(:new).with( platform_config['host'],
-                            platform_config['user'],
-                            platform_config['ssh_key']).and_return(ssh)
+    SSHRun.stub(:new).with(platform_config['host'],
+                           platform_config['user'],
+                           platform_config['ssh_key']).and_return(ssh)
     expect(RemoteDistCP.new(from_dir, to_dir).run platform_config).to eql(nil)
   end
 end

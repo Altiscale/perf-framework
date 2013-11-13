@@ -54,7 +54,7 @@ describe BenchmarkMaker, '#load_factory' do
     expect(mr_benchmark).to be_kind_of(MRBenchmark)
     expect(copier).to be_kind_of(RemoteDistCP)
   end
-  
+
   it 'creates a factory chain with launch_emr' do
     benchmark_path = 'resources/wikilogs-config.json'
     platform_path = 'resources/emr-config.json'
@@ -62,14 +62,14 @@ describe BenchmarkMaker, '#load_factory' do
     platform_config = JSON.parse(File.read(platform_path))
     platform_config['cluster_name'] = 'my_fake_cluster'
     emr_launch_config = {}
-    
+
     factory_chain = [EMRLauncher.new(platform_config['cluster_name'], emr_launch_config),
                      RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
                      RemoteDistCP.new(nil, 's3://wikilogs-5gb', '/wikilogs-5gb'),
                      MRFactory.new(benchmark_config, output_file),
                      RemoteDistCP.new(nil, '/tmp/hadoop-yarn/staging/history', 's3://dp-138-perf/jhist'),
                      EMRTerminator.new]
-    maker = BenchmarkMaker.new.uniquify?(true)                                               
+    maker = BenchmarkMaker.new.uniquify?(true)
     maker.emr_launch_config = emr_launch_config
     maker.benchmark_config = benchmark_config
     factory_chain_from_loader = maker.load_factory(platform_config, output_file, log_level)

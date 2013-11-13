@@ -52,11 +52,11 @@ describe MRBenchmark do
         result[:node_type] = platform_config['node_type']
         result[:jobflow_id] = platform_config['jobflow_id']
         result[:job_num] = mock_parser.job_num
-        result[:application_num] = mock_parser.application_num 
+        result[:application_num] = mock_parser.application_num
         benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
         benchmark.instance_variable_set(:@platform, platform_config['platform'])
-        expect(benchmark.populate_output output, platform_config.merge({ label: label })).to eq(result)
+        expect(benchmark.populate_output output, platform_config.merge(label: label)).to eq(result)
       end
     end
 
@@ -69,14 +69,14 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
-        SSHRun.stub(:new).with( platform_config['host'],
-                                platform_config['user'],
-                                platform_config['ssh_key']).and_return(mock_ssh)
+        SSHRun.stub(:new).with(platform_config['host'],
+                               platform_config['user'],
+                               platform_config['ssh_key']).and_return(mock_ssh)
         hdfs_cleanup = "hadoop fs #{cleanup_command} #{output}"
         mock_ssh.should_receive(:execute).with(hdfs_cleanup)
         benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
-        benchmark.run platform_config.merge({ label: label })
+        benchmark.run platform_config.merge(label: label)
       end
 
       it 'swallows exception during cleaning of output directory in hdfs' do
@@ -87,16 +87,16 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
-        SSHRun.stub(:new).with( platform_config['host'],
-                                platform_config['user'],
-                                platform_config['ssh_key']).and_return(mock_ssh)
+        SSHRun.stub(:new).with(platform_config['host'],
+                               platform_config['user'],
+                               platform_config['ssh_key']).and_return(mock_ssh)
         hdfs_cleanup = "hadoop fs #{cleanup_command} #{output}"
         mock_ssh.stub(:execute).with(hdfs_cleanup) do
           fail 'I will be swallowed'
         end
         benchmark = MRBenchmark.new benchmark_config
         benchmark.parser = mock_parser
-        benchmark.run platform_config.merge({ label: label })
+        benchmark.run platform_config.merge(label: label)
       end
 
       it 'runs a hadoop job' do
@@ -110,9 +110,9 @@ describe MRBenchmark do
         mock_ssh.stub(:execute).with(an_instance_of(String)) do
           {}
         end
-        SSHRun.stub(:new).with( platform_config['host'],
-                                platform_config['user'],
-                                platform_config['ssh_key']).and_return(mock_ssh)
+        SSHRun.stub(:new).with(platform_config['host'],
+                               platform_config['user'],
+                               platform_config['ssh_key']).and_return(mock_ssh)
         hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
         job_status = { exit_code: 0 }
         mock_ssh.stub(:execute).with(hadoop_command) do

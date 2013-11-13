@@ -43,13 +43,13 @@ options = OptionParser.new do |opts|
           'path to benchmark.json') do |benchmark_path|
     settings.benchmark_path = benchmark_path
   end
-  
+
   opts.on('-e',
           '--emr-launch-config EMR_LAUNCH_JSON_PATH',
           'path to emr-launch-config.json') do |emr_launch_path|
     settings.emr_launch_path = emr_launch_path
   end
-  
+
   opts.on('-k',
           '--keep-alive',
           'flag to keep the emr instance alive') do
@@ -137,11 +137,11 @@ end
 logger.level = log_map[settings.log_level]
 benchmark_maker = BenchmarkMaker.new.uniquify?(settings.uniquify).keep_alive?(settings.keep_alive)
 platform_config = JSON.parse(File.read(settings.platform_path))
-benchmark_maker.emr_launch_config = JSON.parse(File.read(settings.emr_launch_path), 
-                                               symbolize_names: true) unless settings.emr_launch_path.nil? 
+benchmark_maker.emr_launch_config = JSON.parse(File.read(settings.emr_launch_path),
+                                               symbolize_names: true) unless settings.emr_launch_path.nil?
 benchmark_maker.benchmark_config = JSON.parse(File.read(settings.benchmark_path)) unless settings.benchmark_path.nil?
 benchmark = benchmark_maker.load_factory(platform_config, settings.output, settings.log_level)
 current_user = `echo $(whoami)`.chomp('\n')
-result = benchmark.run platform_config.merge({ label: settings.label, current_user: current_user, exit_code: 0 })
+result = benchmark.run platform_config.merge(label: settings.label, current_user: current_user, exit_code: 0)
 logger.debug "result #{result.to_s}"
 exit result[:exit_code]

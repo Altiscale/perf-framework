@@ -16,7 +16,7 @@ require 'spec_helper'
 
 describe EMRLauncher, '#launch_emr' do
   cluster_name = 'fake_cluster'
-  config = { name: 'emr', alive: true, instance_count: 2}
+  config = { name: 'emr', alive: true, instance_count: 2 }
   it 'is invoked with the correct config' do
     job_flow = double(AWS::EMR::JobFlow)
     job_flow.stub(:state).and_return('WAITING')
@@ -24,7 +24,7 @@ describe EMRLauncher, '#launch_emr' do
     emr.stub(:job_flows) do |job_flows|
       job_flows.stub(:create).with(cluster_name, config).and_return(job_flow)
     end
-    AWS::EMR.stub(:new).with( region: 'us-west-2' ).and_return(emr)
+    AWS::EMR.stub(:new).with(region: 'us-west-2').and_return(emr)
     launcher = EMRLauncher.new cluster_name, config
     expect(launcher.launch_emr).to eq(job_flow)
   end
@@ -32,25 +32,25 @@ end
 
 describe EMRLauncher, '#tag_instances' do
   cluster_name = 'fake_cluster'
-  config = { name: 'emr', alive: true, instance_count: 2}
+  config = { name: 'emr', alive: true, instance_count: 2 }
   jobflow_id = 'my_jobflow_id'
-  instances = { tag_set: [{ resource_id: "i1" }, { resource_id: "i2" }] }
-  instance_list = ["i1", "i2"]
+  instances = { tag_set: [{ resource_id: 'i1' }, { resource_id: 'i2' }] }
+  instance_list = %w(i1 i2)
   current_user = 'me'
   it 'is invoked with the correct config' do
     ec2 = double(AWS::EC2)
     client = double(AWS::EC2::Client)
-    client.stub(:describe_tags).with({ 
-      filters: [{ name:"resource-type", values: ["instance"]},
-        { name: "key", values: ["aws:elasticmapreduce:job-flow-id"] },
-        { name: "value", values: ["#{jobflow_id}"] }
+    client.stub(:describe_tags).with(
+      filters: [{ name: 'resource-type', values: ['instance'] },
+                { name: 'key', values: ['aws:elasticmapreduce:job-flow-id'] },
+                { name: 'value', values: ["#{jobflow_id}"] }
       ]
-    }).and_return(instances)
-    client.should_receive(:create_tags).with({  resources: instance_list, 
-                    tags: [ { key: "Customer", value: "Engineering"}, 
-                            { key: "User", value: "#{current_user}@altiscale.com" }] })
+    ).and_return(instances)
+    client.should_receive(:create_tags).with(resources: instance_list,
+                                             tags: [{ key: 'Customer', value: 'Engineering' },
+                                                    { key: 'User', value: "#{current_user}@altiscale.com" }])
     ec2.stub(:client).and_return(client)
-    AWS::EC2.stub(:new).with( region: 'us-west-2' ).and_return(ec2)
+    AWS::EC2.stub(:new).with(region: 'us-west-2').and_return(ec2)
     launcher = EMRLauncher.new cluster_name, config
     launcher.tag_instances jobflow_id, current_user
   end
@@ -67,7 +67,7 @@ describe EMRTerminator, '#run' do
     emr.stub(:job_flows) do |job_flows|
       job_flows.stub(:[]).with(jobflow_id).and_return(job_flow)
     end
-    AWS::EMR.stub(:new).with( region: 'us-west-2' ).and_return(emr)
+    AWS::EMR.stub(:new).with(region: 'us-west-2').and_return(emr)
     EMRTerminator.new.run prior_results
   end
 end

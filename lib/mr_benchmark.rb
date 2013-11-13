@@ -62,7 +62,7 @@ class MRBenchmark
     result
   end
 
-  def default_label prior_result
+  def default_label(prior_result)
     "#{@benchmark_config["benchmark"]}"\
     "_#{prior_result["platform"]}_#{prior_result["node_type"]}"\
     "_#{prior_result["hadoop_slaves"]}"
