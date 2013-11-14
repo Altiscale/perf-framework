@@ -18,8 +18,8 @@ describe BenchmarkMaker, '#load_factory' do
   output_file = 'results.csv'
   log_level = 'debug'
   it 'creates a factory chain with one element' do
-    benchmark_path = 'resources/bare-wikilogs-config.json'
-    platform_path = 'resources/emr-config.json'
+    benchmark_path = 'spec/lib/resources/bare-wikilogs-config.json'
+    platform_path = 'spec/lib/resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
     factory_chain = [MRFactory.new(benchmark_config, output_file), EMRTerminator.new]
@@ -35,8 +35,8 @@ describe BenchmarkMaker, '#load_factory' do
   end
 
   it 'creates a factory chain with more than one element' do
-    benchmark_path = 'resources/wikilogs-config.json'
-    platform_path = 'resources/emr-config.json'
+    benchmark_path = 'spec/lib/resources/wikilogs-config.json'
+    platform_path = 'spec/lib/resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
     factory_chain = [RemoteDistCP.new(nil, 's3://dp-138-perf/jobjars/WikiStats_lzo.jar', '/jobjars/WikiStats.jar'),
@@ -56,8 +56,8 @@ describe BenchmarkMaker, '#load_factory' do
   end
 
   it 'creates a factory chain with launch_emr' do
-    benchmark_path = 'resources/wikilogs-config.json'
-    platform_path = 'resources/emr-config.json'
+    benchmark_path = 'spec/lib/resources/wikilogs-config.json'
+    platform_path = 'spec/lib/resources/emr-config.json'
     benchmark_config = JSON.parse(File.read(benchmark_path))
     platform_config = JSON.parse(File.read(platform_path))
     platform_config['cluster_name'] = 'my_fake_cluster'

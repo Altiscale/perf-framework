@@ -18,7 +18,7 @@ require 'bundler/gem_tasks'
 require 'rake/clean'
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
-
+require_relative 'lib/perf_framework/version'
 # Clobber should also clean up built packages
 CLOBBER.include('pkg')
 
@@ -30,6 +30,11 @@ task :install_deps do
   Bundler.with_clean_env do
     sh 'bundle install --system'
   end
+end
+
+task :publish do
+  
+  sh "gem inabox pkg/perf_framework-#{PerfFramework::VERSION}.gem"
 end
 
 RSpec::Core::RakeTask.new(:test) do |t|

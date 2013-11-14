@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rubocop"
+  spec.add_development_dependency('geminabox', '~> 0.11')
   spec.add_runtime_dependency "net-ssh"
   spec.add_runtime_dependency "net-scp"
   spec.add_runtime_dependency "aws-sdk"
