@@ -13,7 +13,6 @@
 # limitations under the License
 
 require 'aws-sdk'
-require 'set'
 EMR_REGION = 'us-west-2'
 # Launches an emr
 class EMRLauncher
@@ -30,7 +29,7 @@ class EMRLauncher
   def launch_emr
     emr = AWS::EMR.new region: EMR_REGION
     job_flow = emr.job_flows.create @cluster_name, @config
-    done_states = Set.new %w(WAITING FAILED TERMINATED COMPLETED)
+    done_states = %w(WAITING FAILED TERMINATED COMPLETED)
     until done_states.include? job_flow.state
       logger.debug "job_flow #{job_flow.job_flow_id} #{job_flow.state}"
       sleep EMR_STATUS_SLEEP
@@ -40,23 +39,24 @@ class EMRLauncher
   end
 
   def tag_instances(jobflow_id, user)
-    ec2 = AWS::EC2.new region: EMR_REGION
-    client = ec2.client
-    instances = client.describe_tags(
-        filters: [{ name: 'resource-type', values: ['instance'] },
-                  { name: 'key', values: ['aws:elasticmapreduce:job-flow-id'] },
-                  { name: 'value', values: ["#{jobflow_id}"] }
-        ]
-      )
-
-    instances = instances[:tag_set]
-    logger.debug "instances #{instances.to_s}"
-    instance_list = []
-    instances.each { |instance| instance_list << instance[:resource_id] }
-    logger.debug "instances #{instance_list}"
-    client.create_tags(resources: instance_list,
-                       tags: [{ key: 'Customer', value: 'Engineering' },
-                              { key: 'User', value: "#{user}@altiscale.com" }])
+    ec2 = AWS::EC2.new(region: EMR_REGION).client
+    AWS.memoize do
+      instances = ec2.describe_tags(
+          filters: [{ name: 'resource-type', values: ['instance'] },
+                    { name: 'key', values: ['aws:elasticmapreduce:job-flow-id'] },
+                    { name: 'value', values: ["#{jobflow_id}"] }
+          ]
+        )
+  
+      instances = instances[:tag_set]
+      logger.debug "instances #{instances.to_s}"
+      instance_list = []
+      instances.each { |instance| instance_list << instance[:resource_id] }
+      logger.debug "instances #{instance_list}"
+      ec2.create_tags(resources: instance_list,
+                         tags: [{ key: 'Customer', value: 'Engineering' },
+                                { key: 'User', value: "#{user}@altiscale.com" }])
+    end                          
     logger.info "Successfully launched emr instance: #{jobflow_id}"
   end
 

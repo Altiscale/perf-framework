@@ -111,7 +111,7 @@ begin
     missing << setting.to_s.gsub('_', '-') unless settings.marshal_dump.key?(setting)
   end
   mandatory_one_of_each.each do |setting|
-    contains_one = contains_one || settings.marshal_dump.key?(setting)
+    contains_one ||= settings.marshal_dump.key?(setting)
   end
   unless missing.empty?
     puts "Missing required options: #{missing.join(', ')}"
@@ -141,7 +141,7 @@ benchmark_maker.emr_launch_config = JSON.parse(File.read(settings.emr_launch_pat
                                                symbolize_names: true) unless settings.emr_launch_path.nil?
 benchmark_maker.benchmark_config = JSON.parse(File.read(settings.benchmark_path)) unless settings.benchmark_path.nil?
 benchmark = benchmark_maker.load_factory(platform_config, settings.output, settings.log_level)
-current_user = `echo $(whoami)`.chomp('\n')
+current_user = ENV['USER']
 result = benchmark.run platform_config.merge(label: settings.label, current_user: current_user, exit_code: 0)
 logger.debug "result #{result.to_s}"
 exit result[:exit_code]

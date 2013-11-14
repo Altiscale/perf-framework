@@ -69,19 +69,19 @@ class MRBenchmark
   end
 
   def populate_output(output, prior_result)
-    result = {}
-    result[:label] = prior_result[:label].nil? ? default_label(prior_result) : prior_result[:label]
-    result[:benchmark] = @benchmark_config['benchmark']
-    result[:platform] = @platform
-    result[:run_options] =  @benchmark_config['run_options']
-    result[:input] = @benchmark_config['platformspec'][@platform]['input']
-    result[:output] = output
-    result[:hadoop_jar] = @benchmark_config['platformspec'][@platform]['hadoop_jar'].split('/')[-1]
-    result[:node_type] = prior_result['node_type']
-    result[:num_nodes] = prior_result['hadoop_slaves']
-    result[:jobflow_id] = prior_result['jobflow_id']
-    result[:job_num] = @parser.job_num
-    result[:application_num] = @parser.application_num
-    result
+    result = {
+      label: prior_result[:label] || default_label(prior_result),
+      benchmark: @benchmark_config['benchmark'],
+      platform: @platform,
+      run_options:  @benchmark_config['run_options'],
+      input: @benchmark_config['platformspec'][@platform]['input'],
+      output: output,
+      hadoop_jar: @benchmark_config['platformspec'][@platform]['hadoop_jar'].split('/')[-1],
+      node_type: prior_result['node_type'],
+      num_nodes: prior_result['hadoop_slaves'],
+      jobflow_id: prior_result['jobflow_id'],
+      job_num: @parser.job_num,
+      application_num: @parser.application_num
+    }
   end
 end
