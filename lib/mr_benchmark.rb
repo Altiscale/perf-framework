@@ -15,25 +15,29 @@
 require 'logging'
 require 'parsers'
 require 'writers'
+require 'decorators'
 # This class will copy the hadoop jar, clean up the output, and run an MR job
 class MRBenchmark
   include Logging
-  # TODO: Exposed everything for testability. Need to find smarter way
-  attr_writer :writer, :parser, :uniquify
-  attr_reader :description
-  def initialize(benchmark_config, platform_config, ssh_command)
+  include Command
+
+  attr_writer :writer, :parser
+  def initialize(benchmark_config)
     @benchmark_config = benchmark_config
-    @platform_config = platform_config
     @benchmark = @benchmark_config['benchmark']
-    @platform = @platform_config['platform']
-    @ssh_command = ssh_command
-    @description = "mr job: #{@benchmark} on #{@platform}"
+    @description = "mr job: #{@benchmark}"
   end
 
-  # build up the set of commands accoring to the parameters provided
+  def uniquify?(uniquify)
+    @uniquify = uniquify
+    self
+  end
 
-  #
-  def run(result = {})
+  def run(prior_result)
+    @platform = prior_result['platform']
+    logger.debug "platform #{@platform}"
+    logger.debug "prior_result #{prior_result.to_s}"
+    ssh = SSHRun.new prior_result['host'], prior_result['user'], prior_result['ssh_key']
     cleanup_command =  @benchmark_config['platformspec'][@platform]['cleanup_command']
     hadoop_jar = @benchmark_config['platformspec'][@platform]['hadoop_jar']
     main_class = @benchmark_config['platformspec'][@platform]['main_class']
@@ -43,40 +47,41 @@ class MRBenchmark
     output = "#{output}/#{Time.now.to_i}" if @uniquify
     # hdfs cleanup
     begin
-      @ssh_command.execute "hadoop fs #{cleanup_command} #{output}" unless cleanup_command.nil?
+      ssh.execute "hadoop fs #{cleanup_command} #{output}" unless cleanup_command.nil?
       logger.debug 'Cleaned hdfs'
     rescue => e
       logger.warn "Exception while cleaning: #{e.backtrace}"
     end
     # run hadoop command
     hadoop_command = "hadoop jar #{hadoop_jar} #{main_class} #{run_options} #{input} #{output}"
-    job_status = @ssh_command.execute hadoop_command
+    job_status = ssh.execute hadoop_command
     logger.debug "job_status #{job_status}"
-    result = populate_output output, result
+    result = populate_output output, prior_result
     result.merge! job_status
     @writer.write result unless @writer.nil?
     result
   end
 
-  def default_label
+  def default_label(prior_result)
     "#{@benchmark_config["benchmark"]}"\
-    "_#{@platform_config["platform"]}_#{@platform_config["node_type"]}"\
-    "_#{@platform_config["hadoop_slaves"]}"
+    "_#{prior_result["platform"]}_#{prior_result["node_type"]}"\
+    "_#{prior_result["hadoop_slaves"]}"
   end
 
-  def populate_output(output, result)
-    result[:label] = default_label if result[:label].nil?
-    result[:benchmark] = @benchmark_config['benchmark']
-    result[:platform] = @platform_config['platform']
-    result[:run_options] =  @benchmark_config['run_options']
-    result[:input] = @benchmark_config['platformspec'][@platform]['input']
-    result[:output] = output
-    result[:hadoop_jar] = @benchmark_config['platformspec'][@platform]['hadoop_jar'].split('/')[-1]
-    result[:node_type] = @platform_config['node_type']
-    result[:num_nodes] = @platform_config['hadoop_slaves']
-    result[:jobflow_id] = @platform_config['jobflow_id']
-    result[:job_num] = @parser.job_num
-    result[:application_num] = @parser.application_num
-    result
+  def populate_output(output, prior_result)
+    result = {
+      label: prior_result[:label] || default_label(prior_result),
+      benchmark: @benchmark_config['benchmark'],
+      platform: @platform,
+      run_options:  @benchmark_config['run_options'],
+      input: @benchmark_config['platformspec'][@platform]['input'],
+      output: output,
+      hadoop_jar: @benchmark_config['platformspec'][@platform]['hadoop_jar'].split('/')[-1],
+      node_type: prior_result['node_type'],
+      num_nodes: prior_result['hadoop_slaves'],
+      jobflow_id: prior_result['jobflow_id'],
+      job_num: @parser.job_num,
+      application_num: @parser.application_num
+    }
   end
 end

@@ -19,29 +19,20 @@ require 'mr_benchmark'
 require 'writers'
 require 'logging'
 require 'decorators'
-
+# require 'emr_launcher'
 # Creates the mr_benchmark
 class MRFactory
   include Logging
   attr_reader :benchmark_config, :platform_config
-  def initialize(benchmark_config, platform_config, output_file)
+  def initialize(benchmark_config, output_file)
     @benchmark_config = benchmark_config
-    @platform_config = platform_config
     @writer = CSVWriter.new output_file
   end
 
   def create_benchmark
-    parser = MRValidator.new
-    host = @platform_config['host_name']
-    user = @platform_config['user_name']
-    ssh_key = @platform_config['ssh_private_key']
-
-    ssh_factory = SSHFactory.new(host, user, ssh_key, parser)
-    benchmark = MRBenchmark.new(@benchmark_config,
-                                @platform_config,
-                                ssh_factory.ssh)
+    benchmark = MRBenchmark.new(@benchmark_config)
     benchmark.writer = @writer
-    benchmark.parser = parser
+    benchmark.parser = MRValidator.new
     benchmark
   end
 end
@@ -58,45 +49,44 @@ end
 # Creates the benchmark
 class BenchmarkMaker
   include Logging
+  attr_writer :benchmark_config, :emr_launch_config
 
   def uniquify?(uniquify)
     @uniquify = uniquify
     self
   end
 
-  def transfers(transfers_array, ssh_factory)
+  def keep_alive?(keep_alive)
+    @keep_alive = keep_alive
+    self
+  end
+
+  def transfers(transfers_array)
     transfer_list = []
     transfers_array.each do |transfer|
       force = !transfer['force'].nil? && transfer['force'] == 'true'
-      transfer_list << RemoteDistCP.new(ssh_factory.ssh, transfer['from'], transfer['to'], force) if transfer['scp'].nil?
-      transfer_list << RemoteSCP.new(ssh_factory.scp, transfer['from'], transfer['to']) unless transfer['scp'].nil?
+      transfer_list << RemoteDistCP.new(transfer['from'], transfer['to'], force) if transfer['scp'].nil?
+      transfer_list << RemoteSCP.new(transfer['from'], transfer['to']) unless transfer['scp'].nil?
     end unless transfers_array.nil?
     logger.debug "adding #{transfer_list.to_s}"
     transfer_list
   end
 
-  def load_factory(benchmark_path, platform_path, output_file, log_level)
+  def load_factory(platform_config, output_file, log_level)
     logger.level = log_level
-    benchmark_config = JSON.parse(File.read(benchmark_path))
-    platform_config = JSON.parse(File.read(platform_path))
-    benchmark = MRFactory.new(benchmark_config,
-                              platform_config,
-                              output_file)
-                              .create_benchmark
-    benchmark.uniquify = @uniquify
-    host = platform_config['host_name']
-    user = platform_config['user_name']
-    ssh_key = platform_config['ssh_private_key']
-    ssh_factory = SSHFactory.new(host, user, ssh_key)
-
-    platform = platform_config['platform']
-    logger.debug "platform #{platform}"
-    pre_transfers = benchmark_config['platformspec'][platform]['pre_transfers']
-    post_transfers = benchmark_config['platformspec'][platform]['post_transfers']
+    pre_transfers = post_transfers = nil
+    unless @benchmark_config.nil?
+      benchmark = MRFactory.new(@benchmark_config, output_file).create_benchmark.uniquify?(@uniquify)
+      platform = platform_config['platform']
+      pre_transfers = @benchmark_config['platformspec'][platform]['pre_transfers']
+      post_transfers = @benchmark_config['platformspec'][platform]['post_transfers']
+    end
     chain = CommandChain.new
-    chain.add transfers pre_transfers, ssh_factory
+    chain.add EMRLauncher.new platform_config['cluster_name'], @emr_launch_config unless @emr_launch_config.nil?
+    chain.add transfers pre_transfers
     chain.add benchmark
-    chain.add transfers post_transfers, ssh_factory
+    chain.add transfers post_transfers
+    chain.add EMRTerminator.new unless @keep_alive
     chain
   end
 end

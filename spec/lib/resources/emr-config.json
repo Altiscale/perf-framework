@@ -1,9 +1,9 @@
 {
  "platform":"<platform_name>",
  "jobflow_id":"<the emr job flow>",
- "host_name":"<host name of the emr master>",
- "user_name":"hadoop",
- "ssh_private_key":"<ssh_key>",
+ "host":"<host name of the emr master>",
+ "user":"hadoop",
+ "ssh_key":"<ssh_key>",
  "node_type":"m1.large",
  "hadoop_slaves":10
 }

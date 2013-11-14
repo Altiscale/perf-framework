@@ -17,12 +17,16 @@ require 'spec_helper'
 describe RemoteDistCP, '#run' do
   from_dir = 'from/my/source'
   to_dir = 'to/my/dest'
+  platform_config = { 'user' => 'fake_user', 'host' => 'fake_host', 'ssh_key' => 'fake_key' }
   it 'invokes distcp from_dir to to_dir' do
     ssh = double(SSHRun)
     ssh.should_receive(:execute).with(anything)
     distcp = "hadoop distcp #{from_dir} #{to_dir}"
     ssh.should_receive(:execute).with(distcp)
-    RemoteDistCP.new(ssh, from_dir, to_dir, true).run
+    SSHRun.stub(:new).with(platform_config['host'],
+                           platform_config['user'],
+                           platform_config['ssh_key']).and_return(ssh)
+    RemoteDistCP.new(from_dir, to_dir, true).run platform_config
   end
 
   it 'does not invoke distcp if force is false and destination found' do
@@ -31,6 +35,9 @@ describe RemoteDistCP, '#run' do
     ssh.stub(:execute).with(command) do
       { exit_code: 0 }
     end
-    expect(RemoteDistCP.new(ssh, from_dir, to_dir).run).to eql(nil)
+    SSHRun.stub(:new).with(platform_config['host'],
+                           platform_config['user'],
+                           platform_config['ssh_key']).and_return(ssh)
+    expect(RemoteDistCP.new(from_dir, to_dir).run platform_config).to eql(nil)
   end
 end

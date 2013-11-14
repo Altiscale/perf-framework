@@ -18,7 +18,9 @@ require 'parsers'
 require 'writers'
 require 'factories'
 require 'logging'
-
+require 'decorators'
+require 'emr_launcher'
+require 'perf_framework/version'
 # Performance benchmark
 module PerfBenchmark
 end

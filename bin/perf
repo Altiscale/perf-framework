@@ -21,6 +21,7 @@ require 'perf_benchmark'
 require 'logger'
 require 'optparse'
 require 'ostruct'
+require 'json'
 
 LOG_LEVELS = %w(
   debug
@@ -35,11 +36,24 @@ settings = OpenStruct.new
 options = OptionParser.new do |opts|
   settings.log_level = 'info'
   settings.uniquify = false
+  settings.keep_alive = false
   settings.output = 'results.csv'
   opts.on('-b',
           '--benchmark_path BENCHMARK_JSON_PATH',
           'path to benchmark.json') do |benchmark_path|
     settings.benchmark_path = benchmark_path
+  end
+
+  opts.on('-e',
+          '--emr-launch-config EMR_LAUNCH_JSON_PATH',
+          'path to emr-launch-config.json') do |emr_launch_path|
+    settings.emr_launch_path = emr_launch_path
+  end
+
+  opts.on('-k',
+          '--keep-alive',
+          'flag to keep the emr instance alive') do
+    settings.keep_alive = true
   end
 
   opts.on('-p',
@@ -62,10 +76,16 @@ options = OptionParser.new do |opts|
 
   opts.on('-u',
           '--uniquify',
-          'uniquify output') do |uniquify|
+          'uniquify output') do
     settings.uniquify = true
   end
 
+  opts.on('-v',
+          '--version',
+          'version of the tool') do
+    puts PerfFramework::VERSION
+    exit
+  end
   opts.on('-j',
           '--job_label LABEL_NAME',
           'A label for the job') do |label|
@@ -83,13 +103,23 @@ end
 # Parse options and make sure we have our required ones.
 begin
   options.parse!
-  mandatory = [:benchmark_path, :platform_path]
+  mandatory = [:platform_path]
+  mandatory_one_of_each = [:benchmark_path, :emr_launch_path]
   missing = []
+  contains_one = false
   mandatory.each do |setting|
     missing << setting.to_s.gsub('_', '-') unless settings.marshal_dump.key?(setting)
   end
+  mandatory_one_of_each.each do |setting|
+    contains_one ||= settings.marshal_dump.key?(setting)
+  end
   unless missing.empty?
     puts "Missing required options: #{missing.join(', ')}"
+    puts options.to_s
+    exit 1
+  end
+  unless contains_one
+    puts "At least one of the following is required: #{mandatory_one_of_each.join(', ')}"
     puts options.to_s
     exit 1
   end
@@ -105,11 +135,13 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
 end
 
 logger.level = log_map[settings.log_level]
-benchmark_maker = BenchmarkMaker.new.uniquify?(settings.uniquify)
-benchmark = benchmark_maker.load_factory(settings.benchmark_path,
-                                         settings.platform_path,
-                                         settings.output,
-                                         settings.log_level)
-result = benchmark.run(label: settings.label)
+benchmark_maker = BenchmarkMaker.new.uniquify?(settings.uniquify).keep_alive?(settings.keep_alive)
+platform_config = JSON.parse(File.read(settings.platform_path))
+benchmark_maker.emr_launch_config = JSON.parse(File.read(settings.emr_launch_path),
+                                               symbolize_names: true) unless settings.emr_launch_path.nil?
+benchmark_maker.benchmark_config = JSON.parse(File.read(settings.benchmark_path)) unless settings.benchmark_path.nil?
+benchmark = benchmark_maker.load_factory(platform_config, settings.output, settings.log_level)
+current_user = ENV['USER']
+result = benchmark.run platform_config.merge(label: settings.label, current_user: current_user, exit_code: 0)
 logger.debug "result #{result.to_s}"
 exit result[:exit_code]
