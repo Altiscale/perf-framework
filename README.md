@@ -12,8 +12,8 @@ Currently, the benchmark will allow performing the following tasks:
 ###Installing the gem
 After cloning the repository, cd into the directory, and run rake clean all to install the perf_framework gem.
 ```bash
-$cd perf_framework
-$rake clean all
+$ cd perf_framework
+$ rake clean all
 ```
 ###Running the application
 ```bash
@@ -49,7 +49,7 @@ Options for running the benchmark:
 
 -k: This flag indicates that the emr cluster should be kept alive after the job is complete. Without this flag, the emr cluster would terminate after running the job.
 
--e: You can provide an emr-launch-config.json, which will indicate how to start an emr cluster. See aws(http://docs.aws.amazon.com/AWSRubySDK/latest/AWS/EMR/Client.html#run_job_flow-instance_method) for documentation.
+-e: You can provide an emr-launch-config.json, which will indicate how to start an emr cluster. See the [AWS::EMR::Client documentation](http://docs.aws.amazon.com/AWSRubySDK/latest/AWS/EMR/Client.html#run_job_flow-instance_method) for more information.
 
 ###Benchmark and platform json
 ####benchmark.json
@@ -75,7 +75,7 @@ This file configures the benchmark run. It provides the input, output, location 
                 {
                     "scp": "<true to indicate that this would be a scp copy>",
                     "from": "<local directory>",
-                    "to": "<directory on cluster host(emr host or desktop)>"
+                    "to": "<directory on cluster host (emr host or desktop)>"
                 },
                 {
                     "from": "<hdfs or s3 from directory>",
@@ -105,11 +105,11 @@ Put the hostname from the Job Flow description (from elastic-mapreduce --list ab
 
 ###Running the benchmark
 You can run the benchmark by providing a platform configuration file and a benchmark configuration file. In addition, you can change the default logging to debug, change the default output file, provide a custom label to identify your run, and copy the job history files to s3.
-An example run(for emr):
-```
-$perf -b ~/dev/perf/perf-configs/teragen-config.json -p ~/dev/perf/perf-configs/emr-config.json -l debug -o ~/dev/perf/my_perf_results.csv -j teragen_large
+An example run (for emr):
+```bash
+$ perf -b ~/dev/perf/perf-configs/teragen-config.json -p ~/dev/perf/perf-configs/emr-config.json -l debug -o ~/dev/perf/my_perf_results.csv -j teragen_large
 ```
 ###Optional: Launching and terminating emr with the benchmark
 
-If you want to launch(and terminate) an emr cluster from the perf-framework, you can provide an emr-launch-config.json to the -e flag mentioned above. See aws documentation on the structure of this json file.
-Alternatively, you can provide steps to run a job in the emr-launch-config.json. In that case you can omit providing a benchmark.json(since emr-launch-config.json will contain the benchmark information).
+If you want to launch (and terminate) an emr cluster from the perf-framework, you can provide an emr-launch-config.json to the -e flag mentioned above. See aws documentation on the structure of this json file.
+Alternatively, you can provide steps to run a job in the emr-launch-config.json. In that case you can omit providing a benchmark.json (since emr-launch-config.json will contain the benchmark information).
