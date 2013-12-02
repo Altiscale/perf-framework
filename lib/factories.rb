@@ -86,7 +86,7 @@ class BenchmarkMaker
     chain.add transfers pre_transfers
     chain.add benchmark
     chain.add transfers post_transfers
-    chain.add EMRTerminator.new unless @keep_alive
+    chain.add EMRTerminator.new unless @keep_alive || @emr_launch_config.nil? 
     chain
   end
 end

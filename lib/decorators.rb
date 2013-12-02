@@ -111,11 +111,11 @@ class CommandChain
     delay = 1.0 / fps
     iter = 0
     spinner = Thread.new do
-      while iter # Keep spinning until told otherwise
+      while iter
         print chars[(iter += 1) % chars.length]
         sleep delay
         print "\b"
-      end
+      end unless logger.level == Logger::DEBUG
     end
     yield.tap do     # After yielding to the block, save the return value
       iter = false   # Tell the thread to exit, cleaning up after itself

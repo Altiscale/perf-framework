@@ -23,6 +23,7 @@ class SCPUploader
   def initialize(host, user, ssh_key)
     @host = host
     @user = user
+    raise "Missing ssh_key: #{ssh_key}" unless ssh_key.nil? || File.exist?(ssh_key)
     @ssh_key = ssh_key
   end
 
@@ -47,6 +48,7 @@ class SSHRun
   def initialize(host, user, ssh_key, parser = nil)
     @host = host
     @user = user
+    raise "Missing ssh_key: #{ssh_key}" unless !ssh_key.nil? && File.exist?(ssh_key)
     @ssh_key = ssh_key
     @parser = parser
   end
