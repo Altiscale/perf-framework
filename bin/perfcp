@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+
+# Copyright (c) 2013 Altiscale, inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License
+
+# This script runs the benchmark. It requires the platform
+# and benchmark json files
+
+require 'logger'
+require 'optparse'
+require 'ostruct'
+
+LOG_LEVELS = %w(
+  debug
+  info
+  warn
+  error
+  fatal
+)
+
+def exec(command, logger)
+  logger.debug "executing #{command}"
+  logger.error "Error running #{command}" unless system command
+  logger.debug "#{command} OK"
+end
+
+logger = Logger.new(STDOUT)
+log_map = Hash[LOG_LEVELS.map.with_index.to_a]
+settings = OpenStruct.new
+options = OptionParser.new do |opts|
+  settings.log_level = 'info'
+  settings.times = 1
+  
+  opts.on('-s',
+          '--sources SOURCES',
+          'Comma separated source folders.') do |sources|
+    settings.sources = sources
+  end
+  
+  opts.on('-d',
+          '--dest DESTINATIONS',
+          'Destination folder.') do |dest|
+    settings.dest = dest
+  end
+  
+  opts.on('-t',
+          '--times NUM_TIMES',
+          'Times to run script, default 1.') do |times|
+    settings.times = times
+  end
+  
+  opts.on('-i',
+          '--init INIT_SCRIPT',
+          'Optional init script(runs each time).') do |init|
+    settings.init = init
+  end
+  
+  opts.on('-o',
+          '--outfile FILE',
+          'Optional output for perf stats).') do |outfile|
+    settings.outfile = outfile
+  end
+  
+  opts.on('-l',
+          '--log-level LEVEL',
+          "Log level: #{LOG_LEVELS.join(', ')}") do |log_level|
+    settings.log_level = log_level
+  end
+  
+  opts.on('-h',
+          '--help',
+          'Show this help.') do
+    puts options.to_s
+    exit
+  end
+end
+
+# Parse options and make sure we have our required ones.
+begin
+  options.parse!
+  mandatory = [:sources, :dest]
+  missing = []
+  mandatory.each do |setting|
+    if !settings.marshal_dump.has_key?(setting)
+      missing << setting.to_s.gsub('_', '-')
+    end
+  end
+  if !missing.empty?
+    @logger.warn "Missing required options: #{missing.join(', ')}"
+    @logger.warn options.to_s
+    exit 1
+  end
+  unless LOG_LEVELS.include?(settings.log_level)
+    puts "Invalid log_level (#{settings.log_level}). \
+    Valid values: #{LOG_LEVELS.join(', ')}"
+    exit 1
+  end
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument
+  puts $ERROR_INFO.to_s
+  puts options.to_s
+  exit 1
+end
+
+
+logger.level = log_map[settings.log_level]
+logger.debug "Starting perfcp with sources #{settings.sources}"
+# Execute init script
+for i in 1..settings.times.to_i
+  logger.debug "Run: #{i}"
+  exec(settings.init, logger) if settings.init
+  settings.sources.split(',').each do |source|
+    run_command = "time cp #{source} #{settings.dest}"
+    run_command = "echo #{run_command} >> #{settings.outfile}; { #{run_command}; } 2>> #{settings.outfile}" if settings.outfile
+    exec run_command, logger
+  end
+end
