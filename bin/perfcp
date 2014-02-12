@@ -97,8 +97,8 @@ begin
     end
   end
   if !missing.empty?
-    @logger.warn "Missing required options: #{missing.join(', ')}"
-    @logger.warn options.to_s
+    puts "Missing required options: #{missing.join(', ')}"
+    puts options.to_s
     exit 1
   end
   unless LOG_LEVELS.include?(settings.log_level)
