@@ -14,12 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
-# This script runs the benchmark. It requires the platform
-# and benchmark json files
+# This script tests read and write performance of a file system
+# It copies files from a source folder into a sink folder and calculates
+# average times with standard deviation
 
 require 'logger'
 require 'optparse'
 require 'ostruct'
+require 'terminal-table'
+require 'descriptive_statistics'
+require 'fileutils'
 
 LOG_LEVELS = %w(
   debug
@@ -29,12 +33,6 @@ LOG_LEVELS = %w(
   fatal
 )
 
-def exec(command, logger)
-  logger.debug "executing #{command}"
-  logger.error "Error running #{command}" unless system command
-  logger.debug "#{command} OK"
-end
-
 logger = Logger.new(STDOUT)
 log_map = Hash[LOG_LEVELS.map.with_index.to_a]
 settings = OpenStruct.new
@@ -43,13 +41,13 @@ options = OptionParser.new do |opts|
   settings.times = 1
   
   opts.on('-s',
-          '--sources SOURCES',
-          'Comma separated source folders.') do |sources|
+          '--source SOURCE',
+          'Source folder containing files to be copied.') do |sources|
     settings.sources = sources
   end
   
   opts.on('-d',
-          '--dest DESTINATIONS',
+          '--dest DESTINATION',
           'Destination folder.') do |dest|
     settings.dest = dest
   end
@@ -64,12 +62,6 @@ options = OptionParser.new do |opts|
           '--init INIT_SCRIPT',
           'Optional init script(runs each time).') do |init|
     settings.init = init
-  end
-  
-  opts.on('-o',
-          '--outfile FILE',
-          'Optional output for perf stats).') do |outfile|
-    settings.outfile = outfile
   end
   
   opts.on('-l',
@@ -114,14 +106,79 @@ end
 
 
 logger.level = log_map[settings.log_level]
-logger.debug "Starting perfcp with sources #{settings.sources}"
-# Execute init script
+logger.debug "Starting perfcp with sources in #{settings.sources}"
+
+#The heading row of the table we are going to print
+headings = ["File", "Size"]
+
+#This table will store the file names in the 1st coloumn, file sizes in the 2nd
+#column and times to copy those files in subsequent coloumns. Last 2 coloumns 
+#will be used for mean and standard deviation
+table = Array.new
+
+# Get the list of files and sizes (and make it static)
+i = 0
+Dir.foreach(settings.sources) do |item|
+  next if item == '.' or item == '..'
+  table.push(Array.new)
+  file = File.new(settings.sources + "/" + item)
+  table[i].push(item)
+  table[i].push(file.size())
+  i += 1;
+end
+
+#Create the destination directory if it doesn't exist already
+if !Dir.exists? settings.dest
+  Dir.mkdir(settings.dest)
+  logger.debug "Destination directory #{settings.dest} not found. Creating it"
+end
+
+# For each of the times 
 for i in 1..settings.times.to_i
   logger.debug "Run: #{i}"
-  exec(settings.init, logger) if settings.init
-  settings.sources.split(',').each do |source|
-    run_command = "time cp #{source} #{settings.dest}"
-    run_command = "echo #{run_command} >> #{settings.outfile}; { #{run_command}; } 2>> #{settings.outfile}" if settings.outfile
-    exec run_command, logger
+  headings.push("Run #{i}")
+
+  # Execute init script
+  if settings.init then
+    logger.debug("Running init script: " + settings.init)
+    system(settings.init)
+  end
+
+  #Delete directory if it exists already
+  if Dir.exists? "#{settings.dest}/Run#{i}"
+    FileUtils.rm_rf("#{settings.dest}/Run#{i}")
+    logger.debug "Directory #{settings.dest}/Run#{i} existed already. Deleting it"
+  end
+
+  #Create a new directory in the destination for this run
+  command = "mkdir #{settings.dest}/Run#{i}"
+  logger.debug "Making directory. Command: #{command}"
+  system command
+  abort("Couldn't create a directory for Run #{i}") if $? != 0
+
+  # Do the actual copies. For each file
+  table.each do |row|
+    command = "cp #{settings.sources}/#{row[0]} #{settings.dest}/Run#{i}"
+    logger.debug "Copying file #{row[0]}. Command: #{command}"
+
+    #Push the time taken to do the copy into the row
+    start = Time.now
+    system command
+    row.push(Time.now - start)
+    abort("Couldn't copy file #{row[0]} during Run #{i}") if $? != 0
   end
 end
+
+#Calculate the mean and standard deviations of the times.
+#The times are in the 2nd coloumn onwards
+headings.push("Average", "Std. Dev.")
+table.each do |row|
+  times = row[2..row.size];
+  row.push( times.mean )
+  row.push( times.standard_deviation )
+end
+
+terminal_table = Terminal::Table.new :headings => headings, :rows => table
+
+puts "These were the times: "
+puts terminal_table
