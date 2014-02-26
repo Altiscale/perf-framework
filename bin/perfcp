@@ -54,6 +54,7 @@ options = OptionParser.new do |opts|
   
   opts.on('-t',
           '--times NUM_TIMES',
+          Integer,
           'Times to run script, default 1.') do |times|
     settings.times = times
   end
