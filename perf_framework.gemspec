@@ -26,4 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "net-ssh"
   spec.add_runtime_dependency "net-scp"
   spec.add_runtime_dependency "aws-sdk"
+  spec.add_runtime_dependency "terminal-table"
+  spec.add_runtime_dependency "descriptive_statistics"
 end
