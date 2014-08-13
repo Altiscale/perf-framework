@@ -44,7 +44,7 @@ RSpec::Core::RakeTask.new(:test) do |t|
 end
 
 desc 'Run RuboCop on the lib directory'
-Rubocop::RakeTask.new(:lint) do |t|
+RuboCop::RakeTask.new(:lint) do |t|
   t.patterns = ['lib/**/*.rb']
   t.fail_on_error = false
 end
